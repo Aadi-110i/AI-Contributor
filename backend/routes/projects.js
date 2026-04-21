@@ -45,7 +45,7 @@ router.get('/', authenticate, async (req, res, next) => {
         // Projects the user owns
         const { data: owned, error: ownErr } = await supabase
             .from('projects')
-            .select('*, modules(*)')
+            .select('*, modules(*, profiles:assigned_to(id, username, avatar_url))')
             .eq('owner_id', req.user.id)
             .order('created_at', { ascending: false });
 
@@ -67,7 +67,7 @@ router.get('/', authenticate, async (req, res, next) => {
         if (assignedProjectIds.length > 0) {
             const { data, error } = await supabase
                 .from('projects')
-                .select('*, modules(*)')
+                .select('*, modules(*, profiles:assigned_to(id, username, avatar_url))')
                 .in('id', assignedProjectIds);
             if (error) throw error;
             participating = data;
