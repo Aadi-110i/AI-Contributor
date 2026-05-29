@@ -1,0 +1,43 @@
+{
+  "projects": [
+    {
+      "id": "demo-1",
+      "name": "E-Commerce Platform",
+      "description": "Full-stack e-commerce app with payments and admin",
+      "owner_id": "demo-user",
+      "status": "active",
+      "created_at": "2026-04-10T12:00:00Z"
+    },
+    {
+      "id": "demo-2",
+      "name": "Social Analytics Dashboard",
+      "description": "Real-time analytics with team collaboration features",
+      "owner_id": "demo-user",
+      "status": "merged",
+      "created_at": "2026-04-08T09:00:00Z"
+    }
+  ],
+  "modules": [
+    { "id": "m1", "project_id": "demo-1", "type": "frontend", "assigned_to": "demo-user", "status": "standardized", "updated_at": "2026-04-11T12:00:00Z" },
+    { "id": "m2", "project_id": "demo-1", "type": "backend", "assigned_to": "demo-lead", "status": "standardized", "updated_at": "2026-04-11T12:00:00Z" },
+    { "id": "m3", "project_id": "demo-1", "type": "authentication", "assigned_to": null, "status": "unassigned", "updated_at": "2026-04-11T12:00:00Z" },
+    { "id": "m4", "project_id": "demo-1", "type": "database", "assigned_to": "demo-dev", "status": "uploaded", "updated_at": "2026-04-11T12:00:00Z" },
+    { "id": "m5", "project_id": "demo-1", "type": "integrations", "assigned_to": null, "status": "unassigned", "updated_at": "2026-04-11T12:00:00Z" }
+  ],
+  "invites": [],
+  "merge_logs": [
+    {
+      "id": "l1",
+      "project_id": "demo-2",
+      "status": "success",
+      "log_output": "=== MERGE LOG ===\n[SUCCESS] Merged module: frontend\n[SUCCESS] Merged module: backend\n[SUCCESS] Merged module: authentication\n[SUCCESS] Merged module: database\n[SUCCESS] Merged module: integrations\n[LINK] Generated frontend→backend API connector\n[LINK] Generated auth↔database bridge\n[BUILD] Generated root package.json\n[SUCCESS] Merge complete: 5/5 modules\n\n=== BUILD TEST ===\n[BUILD] Testing frontend...\n[SUCCESS] Dependencies installed\n[SUCCESS] Build successful\n[BUILD] Testing backend...\n[SUCCESS] Dependencies installed\n[SUCCESS] Backend syntax check passed\n[SUCCESS] All build tests passed",
+      "created_at": "2026-04-11T10:00:00Z"
+    }
+  ],
+  "profiles": [
+    { "id": "demo-user", "username": "DemoUser", "avatar_url": "" },
+    { "id": "demo-admin", "username": "Admin", "avatar_url": "" },
+    { "id": "demo-lead", "username": "TeamLead", "avatar_url": "" },
+    { "id": "demo-dev", "username": "Developer", "avatar_url": "" }
+  ]
+}

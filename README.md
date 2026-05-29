@@ -86,6 +86,17 @@ ai-collab-builder/
 - `NEXT_PUBLIC_API_URL=http://localhost:5001/api` for the frontend.
 - `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_JWT_SECRET` are optional for local demo mode.
 
+## Deploying On Vercel
+
+This repository is a monorepo. For Vercel, set the project root to `frontend/`, not the repository root.
+
+- Frontend deployment target: `frontend/`
+- Backend deployment target: a separate host such as Render, Railway, Fly, or another Node server
+- Production frontend API URL: set `NEXT_PUBLIC_API_URL` to the deployed backend URL
+- If you deploy only the frontend, the app can load, but API requests will fail until the backend is live
+
+If Vercel is showing `404: NOT_FOUND`, it usually means the project is pointed at the wrong folder or the domain is attached to a deployment that does not contain the Next app.
+
 ## Tech Stack
 
 - Next.js 16
