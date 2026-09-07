@@ -3,16 +3,16 @@
 import { usePathname } from 'next/navigation';
 import Navbar from './Navbar';
 
-// Pages where the sidebar handles navigation, so we hide the top navbar
-const SIDEBAR_PAGES = ['/dashboard', '/project'];
+// Pages where we hide the top navbar (either because they have a sidebar, or they are standalone fullscreen pages)
+const HIDDEN_NAVBAR_PAGES = ['/dashboard', '/project', '/login'];
 
 export function ConditionalNavbar() {
   const pathname = usePathname();
   
-  // Hide navbar on pages that use the sidebar layout
-  const hasSidebar = SIDEBAR_PAGES.some((page) => pathname.startsWith(page));
+  // Hide navbar on pages that should not have it
+  const hideNavbar = HIDDEN_NAVBAR_PAGES.some((page) => pathname.startsWith(page));
   
-  if (hasSidebar) return null;
+  if (hideNavbar) return null;
   
   return <Navbar />;
 }

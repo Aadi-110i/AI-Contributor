@@ -51,7 +51,7 @@ export default function Navbar() {
                 <span style={{
                     fontSize: '1.125rem',
                     fontWeight: 900,
-                    color: (isHome && !scrolled) ? '#111' : '#ffffff',
+                    color: '#ffffff',
                     letterSpacing: '-0.04em',
                 }}>
                     WIIBUILD
@@ -66,7 +66,7 @@ export default function Navbar() {
                             href="/dashboard"
                             style={{
                                 textDecoration: 'none',
-                                color: (isHome && !scrolled) ? '#444' : (pathname === '/dashboard' ? '#ffffff' : 'rgba(255,255,255,0.5)'),
+                                color: pathname === '/dashboard' ? '#ffffff' : 'rgba(255,255,255,0.7)',
                                 fontWeight: 500,
                                 fontSize: '0.8125rem',
                                 padding: '6px 14px',
@@ -85,8 +85,8 @@ export default function Navbar() {
                                 fontSize: '0.8125rem',
                                 fontWeight: 500,
                                 background: 'transparent',
-                                color: (isHome && !scrolled) ? '#444' : 'rgba(255,255,255,0.6)',
-                                border: (isHome && !scrolled) ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.12)',
+                                color: 'rgba(255,255,255,0.7)',
+                                border: '1px solid rgba(255,255,255,0.12)',
                                 borderRadius: '4px',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s',
@@ -101,7 +101,7 @@ export default function Navbar() {
                             href="/login"
                             style={{
                                 textDecoration: 'none',
-                                color: (isHome && !scrolled) ? '#444' : 'rgba(255,255,255,0.5)',
+                                color: 'rgba(255,255,255,0.7)',
                                 fontWeight: 500,
                                 fontSize: '0.8125rem',
                                 padding: '6px 14px',
@@ -117,7 +117,7 @@ export default function Navbar() {
                                 padding: '8px 20px',
                                 fontSize: '0.8125rem',
                                 fontWeight: 600,
-                                background: (isHome && !scrolled) ? '#D1B06F' : '#C9A96E',
+                                background: '#C9A96E',
                                 color: '#111',
                                 borderRadius: '4px',
                                 transition: 'all 0.2s',

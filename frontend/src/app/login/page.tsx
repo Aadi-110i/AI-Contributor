@@ -1,14 +1,10 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import {
-  Mail, Lock, User, ArrowRight, Layers, Users, Bot,
-  GitMerge, Upload, CheckCircle, Shield, Zap, ChevronLeft
-} from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { GlobeLive } from '@/components/ui/cobe-globe-live';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -19,8 +15,10 @@ export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
-  // Check if Supabase is using placeholder config (not properly set up)
+  // Check if Supabase is using placeholder config
   const isSupabasePlaceholder =
     !process.env.NEXT_PUBLIC_SUPABASE_URL ||
     process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co';
@@ -73,303 +71,429 @@ export default function LoginPage() {
     }
   };
 
-  const handleDemoLogin = (role: string) => {
-    const demoUser = {
-      id: `demo-${role.toLowerCase()}`,
-      email: `${role.toLowerCase()}@aicollab.dev`,
-      user_metadata: { username: `Demo${role}` },
-    };
-    localStorage.setItem('auth_token', `demo-token-${role.toLowerCase()}`);
-    localStorage.setItem('user', JSON.stringify(demoUser));
-    router.push('/dashboard');
-  };
-
   return (
-    <div className="login-root">
-      {/* Background Globe — same as landing page */}
-      <div className="login-globe-container">
-        <GlobeLive />
+    <div className="auth-root">
+
+      {/* Background White Glow */}
+      <div className="auth-glow"></div>
+
+      {/* Side Typography Decorations */}
+      <div className="auth-side-decor top-left">
+        <div className="vertical-line"></div>
+        <span className="decor-num">01</span>
+        <div className="horizontal-line-gold"></div>
+        <div className="decor-text-block">
+          SMART<br />PEOPLE<br />BUILD<br />TOGETHER
+        </div>
       </div>
 
-      {/* Back Button */}
-      <Link href="/" className="login-back-btn">
-        <ChevronLeft size={16} /> Back to Home
-      </Link>
-
-      <main className="login-container">
-        <div className="login-content">
-          
-          {/* Brand Header */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="login-brand-header"
-          >
-            <div className="login-badge">
-              <Shield size={12} fill="currentColor" />
-              <span>Secure Access</span>
-            </div>
-            <h1 className="login-title">WIIBUILD</h1>
-            <p className="login-subtitle">
-              {isSignUp ? 'Create your collaborative space' : 'Welcome back to the platform'}
-            </p>
-          </motion.div>
-
-          {/* Form Card */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="login-card-outer"
-          >
-            <div className="login-card">
-              <AnimatePresence mode="wait">
-                <motion.form 
-                  key={isSignUp ? 'signup' : 'signin'}
-                  initial={{ opacity: 0, x: isSignUp ? 10 : -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: isSignUp ? -10 : 10 }}
-                  transition={{ duration: 0.2 }}
-                  onSubmit={handleSubmit} 
-                  className="login-form"
-                >
-                  {error && <div className="login-error-toast">{error}</div>}
-
-                  {isSignUp && (
-                    <div className="login-input-group">
-                      <label>Username</label>
-                      <div className="login-input-field">
-                        <User className="input-icon" size={18} />
-                        <input 
-                          type="text" 
-                          placeholder="Your unique handle" 
-                          value={username}
-                          onChange={(e) => setUsername(e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="login-input-group">
-                    <label>Email Address</label>
-                    <div className="login-input-field">
-                      <Mail className="input-icon" size={18} />
-                      <input 
-                        type="email" 
-                        placeholder="name@example.com" 
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="login-input-group">
-                    <label>Password</label>
-                    <div className="login-input-field">
-                      <Lock className="input-icon" size={18} />
-                      <input 
-                        type="password" 
-                        placeholder="••••••••" 
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        minLength={6}
-                      />
-                    </div>
-                  </div>
-
-                  <button type="submit" className="login-primary-btn" disabled={loading}>
-                    {loading ? <span className="loader" /> : (
-                      <>
-                        {isSignUp ? 'Create Account' : 'Sign In'}
-                        <ArrowRight size={18} />
-                      </>
-                    )}
-                  </button>
-                </motion.form>
-              </AnimatePresence>
-
-              <div className="login-card-footer">
-                <p>
-                  {isSignUp ? 'Already have an account?' : "Don't have an account?"}
-                  <button onClick={() => { setIsSignUp(!isSignUp); setError(''); }}>
-                    {isSignUp ? 'Sign In' : 'Register Here'}
-                  </button>
-                </p>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Quick Demo Section */}
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="login-demo-section"
-          >
-            <div className="demo-divider">
-              <span>OR CONTINUE WITH DEMO</span>
-            </div>
-            <div className="demo-chips">
-              <button onClick={() => handleDemoLogin('Admin')} className="demo-chip">
-                <Shield size={14} /> Admin
-              </button>
-              <button onClick={() => handleDemoLogin('Lead')} className="demo-chip">
-                <Users size={14} /> Team Lead
-              </button>
-              <button onClick={() => handleDemoLogin('Developer')} className="demo-chip">
-                <Zap size={14} /> Developer
-              </button>
-            </div>
-          </motion.div>
-
+      <div className="auth-side-decor bottom-left">
+        <div className="horizontal-line-gold-thick"></div>
+        <div className="decor-text-block inline">
+          A NEW WAY<br />TO BUILD SOFTWARE
         </div>
+      </div>
+
+      <div className="auth-side-decor top-right">
+        <div className="decor-text-block inline align-right">
+          TURN<br />IDEAS<br />INTO<br />REALITY
+        </div>
+        <div className="horizontal-line-gray"></div>
+      </div>
+
+      <div className="auth-side-decor bottom-right">
+        <div className="vertical-line"></div>
+        <span className="decor-num">02</span>
+        <div className="horizontal-line-gold"></div>
+        <div className="decor-text-block inline align-right">
+          FASTER<br />IDEAS<br />BRIGHTER<br />FUTURE
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <main className="auth-main">
+
+        {/* Header (Inside Glow) */}
+        <header className="auth-header">
+          <span className="auth-subtitle">BUILD • COLLABORATE • SHIP</span>
+          <h1 className="auth-title">WIIBUILD</h1>
+          <span className="auth-subtitle">IDEAS MEET EXECUTION</span>
+        </header>
+
+        {/* Central Connector */}
+        <div className="auth-connector">
+          <div className="connector-line-top"></div>
+          <div className="connector-dot"></div>
+          <div className="connector-line-bottom"></div>
+        </div>
+
+        {/* Auth Card */}
+        <div className="auth-card">
+
+          {/* Tabs */}
+          <div className="auth-tabs">
+            <button
+              className={`auth-tab ${!isSignUp ? 'active' : ''}`}
+              onClick={() => { setIsSignUp(false); setError(''); }}
+            >
+              Sign In
+            </button>
+            <button
+              className={`auth-tab ${isSignUp ? 'active' : ''}`}
+              onClick={() => { setIsSignUp(true); setError(''); }}
+            >
+              Sign Up
+            </button>
+          </div>
+
+          {/* Form */}
+          <AnimatePresence mode="wait">
+            <motion.form
+              key={isSignUp ? 'signup' : 'signin'}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              onSubmit={handleSubmit}
+              className="auth-form"
+            >
+              {error && <div className="auth-error">{error}</div>}
+
+              {isSignUp && (
+                <div className="input-group">
+                  <label>Username</label>
+                  <div className="input-wrapper">
+                    <Mail className="input-icon" size={16} />
+                    <input
+                      type="text"
+                      placeholder="you"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="input-group">
+                <label>Email address</label>
+                <div className="input-wrapper">
+                  <Mail className="input-icon" size={16} />
+                  <input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="input-group">
+                <label>Password</label>
+                <div className="input-wrapper">
+                  <Lock className="input-icon" size={16} />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                  />
+                  <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              {!isSignUp && (
+                <div className="auth-options">
+                  <label className="remember-me">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                    />
+                    <span>Remember me</span>
+                  </label>
+                  <a href="#" className="forgot-password">Forgot password?</a>
+                </div>
+              )}
+
+              <button type="submit" className="auth-primary-btn" disabled={loading}>
+                {loading ? <span className="loader" /> : (
+                  <>
+                    {isSignUp ? 'Sign Up' : 'Sign In'} <ArrowRight size={16} />
+                  </>
+                )}
+              </button>
+
+              <div className="auth-divider">
+                <span>OR CONTINUE WITH</span>
+              </div>
+
+              <div className="social-logins">
+                <button type="button" className="social-btn" onClick={() => alert('Social login not configured')}>
+                  {/* Simple GitHub SVG */}
+                  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+                  GitHub
+                </button>
+                <button type="button" className="social-btn" onClick={() => alert('Social login not configured')}>
+                  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path><path d="M2 12h20"></path></svg>
+                  Google
+                </button>
+                <button type="button" className="social-btn" onClick={() => alert('Social login not configured')}>
+                  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                  Microsoft
+                </button>
+              </div>
+
+              <div className="auth-footer-link">
+                {isSignUp ? "Already have an account? " : "Don't have an account? "}
+                <button type="button" onClick={() => { setIsSignUp(!isSignUp); setError(''); }}>
+                  {isSignUp ? 'Sign In' : 'Create one'}
+                </button>
+              </div>
+            </motion.form>
+          </AnimatePresence>
+        </div>
+
+        <div className="auth-bottom-signature">
+          <div className="connector-line-bottom-end"></div>
+          <span>POWERED BY A BRIGHTER TOMORROW</span>
+        </div>
+
       </main>
 
       <style jsx>{`
-        .login-root {
-          min-height: 100vh;
-          background: #0f0f0f;
+        .auth-root {
+          height: 100vh;
+          width: 100vw;
+          background: #0B0B0B;
           position: relative;
           overflow: hidden;
           display: flex;
           flex-direction: column;
           color: white;
           font-family: 'Inter', sans-serif;
+          align-items: center;
         }
 
-        .login-globe-container {
+        /* The Massive White Glow */
+        .auth-glow {
           position: absolute;
-          width: 900px;
-          height: 900px;
-          top: 50%;
+          top: -45vw;
           left: 50%;
-          transform: translate(-50%, -40%);
-          opacity: 0.35;
+          transform: translateX(-50%);
+          width: 85vw;
+          height: 65vw;
+          background: #ffffff;
+          border-radius: 50%;
+          z-index: 1;
           pointer-events: none;
-          mask-image: radial-gradient(circle at center, black 0%, transparent 75%);
-          -webkit-mask-image: radial-gradient(circle at center, black 0%, transparent 75%);
+          box-shadow: 0 0 60px rgba(209, 176, 111, 0.35), 0 0 120px rgba(209, 176, 111, 0.15);
         }
 
-        .login-back-btn {
+        @media (max-width: 768px) {
+          .auth-glow {
+            width: 150vw;
+            height: 45vh;
+            top: -15vh;
+          }
+        }
+
+        /* Edge Decorations */
+        .auth-side-decor {
           position: absolute;
-          top: 32px;
-          left: 32px;
-          z-index: 100;
+          z-index: 5;
           display: flex;
-          align-items: center;
-          gap: 8px;
-          color: rgba(255, 255, 255, 0.4);
-          text-decoration: none;
-          font-size: 0.8125rem;
-          font-weight: 500;
-          transition: color 0.2s;
+          flex-direction: column;
+          gap: 12px;
+        }
+        
+        .top-left { top: 12vh; left: 5vw; }
+        .bottom-left { bottom: 10vh; left: 5vw; }
+        .top-right { top: 12vh; right: 5vw; align-items: flex-end; }
+        .bottom-right { bottom: 10vh; right: 5vw; align-items: flex-end; }
+
+        .vertical-line {
+          width: 1px;
+          height: 60px;
+          background: rgba(255,255,255,0.2);
+        }
+        .horizontal-line-gold {
+          height: 1px;
+          width: 20px;
+          background: #D1B06F;
+        }
+        .horizontal-line-gold-thick {
+          height: 2px;
+          width: 32px;
+          background: #D1B06F;
+        }
+        .horizontal-line-gray {
+          height: 1px;
+          width: 20px;
+          background: rgba(255,255,255,0.2);
+        }
+        .decor-num {
+          font-size: 0.875rem;
+          color: #fff;
+          font-weight: 400;
+          letter-spacing: 0.1em;
+        }
+        .decor-text-block {
+          font-size: 0.65rem;
+          color: rgba(255,255,255,0.4);
+          letter-spacing: 0.25em;
+          line-height: 1.8;
+          text-transform: uppercase;
+          margin-top: 8px;
+        }
+        .decor-text-block.inline {
+          line-height: 1.5;
+        }
+        .decor-text-block.align-right {
+          text-align: right;
         }
 
-        .login-back-btn:hover {
-          color: #C9A96E;
+        @media (max-width: 1024px) {
+          .auth-side-decor { display: none; }
         }
 
-        .login-container {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 60px 24px;
+        /* Main Content Layer */
+        .auth-main {
           position: relative;
           z-index: 10;
-        }
-
-        .login-content {
-          width: 100%;
-          max-width: 440px;
-          text-align: center;
-        }
-
-        /* --- Header --- */
-        .login-brand-header {
-          margin-bottom: 40px;
-        }
-
-        .login-badge {
-          display: inline-flex;
+          display: flex;
+          flex-direction: column;
           align-items: center;
-          gap: 8px;
-          background: rgba(201, 169, 110, 0.1);
-          color: #C9A96E;
-          padding: 6px 14px;
-          border-radius: 99px;
-          font-size: 0.6875rem;
-          font-weight: 700;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
+          width: 100%;
+          height: 100%;
+          justify-content: center;
+          padding-top: 3vh;
+        }
+
+        .auth-header {
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
           margin-bottom: 16px;
-          border: 1px solid rgba(201, 169, 110, 0.15);
         }
 
-        .login-title {
-          font-size: clamp(2.5rem, 8vw, 4rem);
+        .auth-subtitle {
+          font-size: 0.65rem;
+          font-weight: 600;
+          color: rgba(0,0,0,0.5);
+          letter-spacing: 0.5em;
+          transform: scaleX(1.1);
+        }
+
+        .auth-title {
+          font-size: clamp(3.5rem, 9vw, 5.5rem);
           font-weight: 900;
-          letter-spacing: -0.04em;
-          line-height: 0.9;
-          margin-bottom: 12px;
+          color: #000;
+          letter-spacing: 0.02em;
+          transform: scaleX(1.1);
+          line-height: 1;
+          margin: 0;
         }
 
-        .login-subtitle {
-          font-size: 0.9375rem;
-          color: rgba(255, 255, 255, 0.5);
-          font-weight: 400;
+        .auth-connector {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          width: 100%;
         }
 
-        /* --- Card --- */
-        .login-card-outer {
-          background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
-          padding: 1px;
-          border-radius: 20px;
-          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+        .connector-line-top {
+          width: 1px;
+          height: 25px;
+          background: rgba(0,0,0,0.2);
+        }
+
+        .connector-dot {
+          width: 16px;
+          height: 16px;
+          background: linear-gradient(135deg, #E6CD8F 0%, #B89650 100%);
+          border-radius: 50%;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.4);
+        }
+
+        .connector-line-bottom {
+          width: 1px;
+          height: 20px;
+          background: rgba(255,255,255,0.15);
+        }
+
+        /* Card */
+        .auth-card {
+          width: 100%;
+          max-width: 420px;
+          background: rgba(18, 18, 18, 0.7);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          border-radius: 16px;
+          padding: 24px 32px 32px;
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+        }
+
+        .auth-tabs {
+          display: flex;
+          border-bottom: 1px solid rgba(255,255,255,0.08);
           margin-bottom: 32px;
         }
 
-        .login-card {
-          background: #151515;
-          border-radius: 19px;
-          padding: 32px;
+        .auth-tab {
+          flex: 1;
+          background: transparent;
+          border: none;
+          padding: 12px 0;
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: rgba(255,255,255,0.4);
+          cursor: pointer;
+          position: relative;
+          transition: color 0.3s ease;
         }
 
-        .login-form {
+        .auth-tab.active {
+          color: #fff;
+        }
+
+        .auth-tab.active::after {
+          content: '';
+          position: absolute;
+          bottom: -1px;
+          left: 0;
+          right: 0;
+          height: 1px;
+          background: #D1B06F;
+        }
+
+        .auth-form {
           display: flex;
           flex-direction: column;
           gap: 20px;
         }
 
-        .login-error-toast {
-          background: rgba(239, 68, 68, 0.1);
-          border: 1px solid rgba(239, 68, 68, 0.2);
-          color: #f87171;
-          font-size: 0.8125rem;
-          padding: 12px;
-          border-radius: 8px;
-          text-align: left;
+        .input-group {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
         }
 
-        .login-input-group {
-          text-align: left;
-        }
-
-        .login-input-group label {
-          display: block;
+        .input-group label {
           font-size: 0.75rem;
-          font-weight: 600;
-          color: rgba(255, 255, 255, 0.4);
-          margin-bottom: 8px;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
+          color: rgba(255,255,255,0.6);
+          font-weight: 500;
         }
 
-        .login-input-field {
+        .input-wrapper {
           position: relative;
           display: flex;
           align-items: center;
@@ -378,147 +502,215 @@ export default function LoginPage() {
         .input-icon {
           position: absolute;
           left: 14px;
-          color: rgba(255, 255, 255, 0.2);
+          color: rgba(255,255,255,0.4);
         }
 
-        .login-input-field input {
+        .input-wrapper input {
           width: 100%;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 10px;
-          padding: 12px 16px 12px 42px;
-          color: white;
+          background: rgba(0, 0, 0, 0.3);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 8px;
+          padding: 12px 14px 12px 40px;
           font-size: 0.875rem;
+          color: white;
           outline: none;
-          transition: all 0.2s;
+          transition: all 0.2s ease;
         }
 
-        .login-input-field input:focus {
-          border-color: #C9A96E;
-          background: rgba(255, 255, 255, 0.05);
-          box-shadow: 0 0 0 4px rgba(201, 169, 110, 0.1);
+        .input-wrapper input:focus {
+          border-color: rgba(209, 176, 111, 0.5);
+          background: rgba(0,0,0,0.5);
         }
 
-        .login-primary-btn {
-          margin-top: 8px;
-          background: #C9A96E;
-          color: #0f0f0f;
+        .input-wrapper input::placeholder {
+          color: rgba(255,255,255,0.2);
+        }
+
+        .password-toggle {
+          position: absolute;
+          right: 14px;
+          background: transparent;
           border: none;
+          color: rgba(255,255,255,0.4);
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0;
+        }
+
+        .auth-options {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 0.75rem;
+        }
+
+        .remember-me {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: rgba(255,255,255,0.6);
+          cursor: pointer;
+        }
+
+        .remember-me input {
+          accent-color: #D1B06F;
+          width: 14px;
+          height: 14px;
+        }
+
+        .forgot-password {
+          color: #D1B06F;
+          text-decoration: underline;
+          text-decoration-color: transparent;
+          transition: text-decoration-color 0.2s;
+        }
+
+        .forgot-password:hover {
+          text-decoration-color: #D1B06F;
+        }
+
+        .auth-primary-btn {
+          margin-top: 8px;
+          background: #D1B06F;
+          color: #0B0B0B;
+          border: none;
+          border-radius: 8px;
           padding: 14px;
-          border-radius: 10px;
-          font-weight: 700;
-          font-size: 0.9375rem;
+          font-size: 0.875rem;
+          font-weight: 600;
+          cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
-          cursor: pointer;
-          transition: all 0.2s;
+          transition: all 0.2s ease;
         }
 
-        .login-primary-btn:hover {
-          background: #D4B87A;
+        .auth-primary-btn:hover {
+          background: #E6CD8F;
           transform: translateY(-1px);
-          box-shadow: 0 8px 24px rgba(201, 169, 110, 0.3);
         }
 
-        .login-primary-btn:disabled {
-          opacity: 0.6;
+        .auth-primary-btn:disabled {
+          opacity: 0.7;
           cursor: not-allowed;
+          transform: none;
         }
 
-        .login-card-footer {
-          margin-top: 24px;
-          padding-top: 24px;
-          border-top: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .login-card-footer p {
-          font-size: 0.875rem;
-          color: rgba(255, 255, 255, 0.4);
-        }
-
-        .login-card-footer button {
-          background: none;
-          border: none;
-          color: #C9A96E;
-          font-weight: 600;
-          margin-left: 6px;
-          cursor: pointer;
-          text-decoration: underline;
-          text-underline-offset: 2px;
-        }
-
-        /* --- Demo Section --- */
-        .demo-divider {
+        .auth-divider {
           display: flex;
           align-items: center;
-          gap: 16px;
-          margin-bottom: 20px;
+          text-align: center;
+          color: rgba(255,255,255,0.3);
+          font-size: 0.65rem;
+          font-weight: 600;
+          letter-spacing: 0.1em;
+          margin: 16px 0;
         }
-
-        .demo-divider::before,
-        .demo-divider::after {
+        
+        .auth-divider::before,
+        .auth-divider::after {
           content: '';
           flex: 1;
-          height: 1px;
-          background: rgba(255, 255, 255, 0.1);
+          border-bottom: 1px solid rgba(255,255,255,0.08);
         }
+        
+        .auth-divider::before { margin-right: 12px; }
+        .auth-divider::after { margin-left: 12px; }
 
-        .demo-divider span {
-          font-size: 0.625rem;
-          font-weight: 700;
-          color: rgba(255, 255, 255, 0.3);
-          letter-spacing: 0.1em;
-        }
-
-        .demo-chips {
+        .social-logins {
           display: flex;
-          justify-content: center;
-          gap: 10px;
-          flex-wrap: wrap;
+          gap: 12px;
         }
 
-        .demo-chip {
-          background: transparent;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          color: rgba(255, 255, 255, 0.6);
-          padding: 8px 16px;
-          border-radius: 99px;
-          font-size: 0.8125rem;
-          font-weight: 600;
+        .social-btn {
+          flex: 1;
           display: flex;
           align-items: center;
+          justify-content: center;
           gap: 8px;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 8px;
+          padding: 10px 0;
+          font-size: 0.75rem;
+          color: #fff;
           cursor: pointer;
-          transition: all 0.2s;
+          transition: background 0.2s;
         }
 
-        .demo-chip:hover {
-          background: rgba(255, 255, 255, 0.05);
-          border-color: rgba(255, 255, 255, 0.2);
-          color: white;
-          transform: translateY(-1px);
+        .social-btn:hover {
+          background: rgba(255,255,255,0.1);
+        }
+
+        .auth-footer-link {
+          text-align: center;
+          font-size: 0.75rem;
+          color: rgba(255,255,255,0.5);
+          margin-top: 16px;
+        }
+
+        .auth-footer-link button {
+          background: transparent;
+          border: none;
+          color: #D1B06F;
+          text-decoration: underline;
+          text-decoration-color: transparent;
+          cursor: pointer;
+          padding: 0;
+          font-family: inherit;
+          transition: text-decoration-color 0.2s;
+        }
+
+        .auth-footer-link button:hover {
+          text-decoration-color: #D1B06F;
+        }
+
+        .auth-error {
+          background: rgba(220, 38, 38, 0.1);
+          color: #ef4444;
+          padding: 12px;
+          border-radius: 6px;
+          font-size: 0.8125rem;
+          text-align: center;
+          border: 1px solid rgba(220, 38, 38, 0.2);
+        }
+
+        .auth-bottom-signature {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          margin-top: 16px;
+        }
+
+        .connector-line-bottom-end {
+          width: 1px;
+          height: 25px;
+          background: rgba(255,255,255,0.15);
+          margin-bottom: 16px;
+        }
+
+        .auth-bottom-signature span {
+          font-size: 0.65rem;
+          color: rgba(255,255,255,0.4);
+          letter-spacing: 0.3em;
         }
 
         .loader {
-          width: 20px;
-          height: 20px;
-          border: 2px solid rgba(0, 0, 0, 0.1);
-          border-top-color: #000;
+          width: 18px;
+          height: 18px;
+          border: 2px solid rgba(0,0,0,0.1);
+          border-bottom-color: #000;
           border-radius: 50%;
-          animation: spin 0.6s linear infinite;
+          display: inline-block;
+          animation: rotation 1s linear infinite;
         }
 
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-
-        @media (max-width: 480px) {
-          .login-title { font-size: 3rem; }
-          .login-card { padding: 24px; }
-          .demo-chips { flex-direction: column; }
-          .demo-chip { justify-content: center; }
+        @keyframes rotation {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
       `}</style>
     </div>
