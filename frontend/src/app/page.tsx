@@ -7,6 +7,8 @@ import { motion } from 'motion/react';
 import { TestimonialsColumn } from '@/components/ui/testimonials-columns-1';
 import { GlobeLive } from '@/components/ui/cobe-globe-live';
 
+import { LiveIndicators } from '@/components/ui/live-indicators';
+
 const testimonials = [
   {
     text: "WiiBuild Platform transformed how our team works. Three devs, three different AI tools, one seamless product. The merge engine is magic.",
@@ -109,6 +111,9 @@ export default function HomePage() {
             <Link href="#how-it-works" className="hero-btn-secondary">
               Learn More
             </Link>
+          </div>
+          <div style={{ marginTop: '64px', opacity: 0.8 }}>
+            <LiveIndicators />
           </div>
         </motion.div>
       </section>

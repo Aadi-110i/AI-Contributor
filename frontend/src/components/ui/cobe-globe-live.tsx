@@ -34,14 +34,7 @@ export function GlobeLive({
   const phiOffsetRef = useRef(0)
   const thetaOffsetRef = useRef(0)
   const isPausedRef = useRef(false)
-  const [liveViewers, setLiveViewers] = useState(2847)
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLiveViewers((v) => Math.max(100, v + Math.floor(Math.random() * 21) - 8))
-    }, 400)
-    return () => clearInterval(interval)
-  }, [])
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     pointerInteracting.current = { x: e.clientX, y: e.clientY }
@@ -162,63 +155,7 @@ export function GlobeLive({
         />
       </div>
 
-      {/* Live activity indicators */}
-      <div style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '8px',
-        justifyContent: 'center',
-        marginTop: '16px',
-      }}>
-        {markers.slice(0, 4).map((m, i) => (
-          <div
-            key={m.id}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.4rem",
-              padding: "6px 12px",
-              background: "var(--surface-2)",
-              border: "1px solid var(--border)",
-              borderRadius: "8px",
-              whiteSpace: "nowrap",
-            }}
-          >
-            <span style={{
-              width: 6, height: 6,
-              background: "var(--accent)",
-              borderRadius: "50%",
-              boxShadow: "0 0 6px var(--accent)",
-              animation: "live-pulse 1.5s ease-in-out infinite",
-              flexShrink: 0,
-            }} />
-            <span style={{
-              fontFamily: "monospace",
-              fontSize: "0.6rem",
-              fontWeight: 600,
-              letterSpacing: "0.08em",
-              color: "var(--accent)",
-              textTransform: "uppercase" as const,
-            }}>LIVE</span>
-            <span style={{
-              fontFamily: "inherit",
-              fontSize: "0.6875rem",
-              color: "var(--text-secondary)",
-              paddingLeft: "0.4rem",
-              borderLeft: "1px solid var(--border)",
-            }}>
-              {Math.floor(liveViewers * (0.3 + 0.7 * Math.pow(0.6, i))).toLocaleString()} active
-            </span>
-          </div>
-        ))}
-      </div>
 
-      <style>{`
-        @keyframes live-pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-      `}</style>
     </div>
   )
 }
