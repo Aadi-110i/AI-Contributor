@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "@/components/ThemeProvider";
 import { NotificationBell } from "@/components/NotificationBell";
 import {
@@ -18,9 +18,11 @@ import {
   Zap,
   Sun,
   Moon,
+  Home,
 } from "lucide-react";
 
 const NAV_ITEMS = [
+  { icon: Home, label: "Home", href: "/" },
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
   { icon: FolderKanban, label: "Projects", href: "#projects" },
   { icon: Users, label: "Collaborations", href: "#collab" },
@@ -36,7 +38,14 @@ interface SidebarProps {
 export function Sidebar({ onExpandChange }: SidebarProps = {}) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const { theme, toggleTheme } = useTheme();
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user');
+    router.push('/login');
+  };
 
   return (
     <>
@@ -94,6 +103,7 @@ export function Sidebar({ onExpandChange }: SidebarProps = {}) {
             <button
               className="topnav-icon-btn topnav-logout"
               title="Logout"
+              onClick={handleLogout}
             >
               <LogOut size={16} />
             </button>

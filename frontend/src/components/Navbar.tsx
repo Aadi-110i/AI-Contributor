@@ -32,13 +32,13 @@ export default function Navbar() {
             left: 0,
             right: 0,
             zIndex: 100,
-            height: '64px',
+            height: '80px', // slightly taller for breathing room
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '0 28px',
+            padding: '0 48px', // Match the 48px from the prompt specifications
             background: scrolled || !isHome
-                ? 'rgba(15, 15, 15, 0.85)'
+                ? 'rgba(11, 11, 11, 0.85)'
                 : 'transparent',
             backdropFilter: scrolled || !isHome ? 'blur(12px) saturate(140%)' : 'none',
             WebkitBackdropFilter: scrolled || !isHome ? 'blur(12px) saturate(140%)' : 'none',
@@ -49,10 +49,10 @@ export default function Navbar() {
         }}>
             <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{
-                    fontSize: '1rem',
+                    fontSize: '1.125rem',
                     fontWeight: 900,
-                    color: '#ffffff',
-                    letterSpacing: '-0.03em',
+                    color: (isHome && !scrolled) ? '#111' : '#ffffff',
+                    letterSpacing: '-0.04em',
                 }}>
                     WIIBUILD
                 </span>
@@ -66,7 +66,7 @@ export default function Navbar() {
                             href="/dashboard"
                             style={{
                                 textDecoration: 'none',
-                                color: pathname === '/dashboard' ? '#ffffff' : 'rgba(255,255,255,0.5)',
+                                color: (isHome && !scrolled) ? '#444' : (pathname === '/dashboard' ? '#ffffff' : 'rgba(255,255,255,0.5)'),
                                 fontWeight: 500,
                                 fontSize: '0.8125rem',
                                 padding: '6px 14px',
@@ -85,9 +85,9 @@ export default function Navbar() {
                                 fontSize: '0.8125rem',
                                 fontWeight: 500,
                                 background: 'transparent',
-                                color: 'rgba(255,255,255,0.6)',
-                                border: '1px solid rgba(255,255,255,0.12)',
-                                borderRadius: '6px',
+                                color: (isHome && !scrolled) ? '#444' : 'rgba(255,255,255,0.6)',
+                                border: (isHome && !scrolled) ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.12)',
+                                borderRadius: '4px',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s',
                             }}
@@ -101,7 +101,7 @@ export default function Navbar() {
                             href="/login"
                             style={{
                                 textDecoration: 'none',
-                                color: 'rgba(255,255,255,0.5)',
+                                color: (isHome && !scrolled) ? '#444' : 'rgba(255,255,255,0.5)',
                                 fontWeight: 500,
                                 fontSize: '0.8125rem',
                                 padding: '6px 14px',
@@ -114,12 +114,12 @@ export default function Navbar() {
                             href="/login"
                             style={{
                                 textDecoration: 'none',
-                                padding: '8px 18px',
+                                padding: '8px 20px',
                                 fontSize: '0.8125rem',
                                 fontWeight: 600,
-                                background: '#C9A96E',
-                                color: '#0f0f0f',
-                                borderRadius: '6px',
+                                background: (isHome && !scrolled) ? '#D1B06F' : '#C9A96E',
+                                color: '#111',
+                                borderRadius: '4px',
                                 transition: 'all 0.2s',
                             }}
                         >

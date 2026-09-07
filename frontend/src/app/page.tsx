@@ -83,39 +83,89 @@ export default function HomePage() {
   return (
     <div className="landing-root">
 
-      {/* ============ HERO — Black, Bold ============ */}
+      {/* ============ HERO — Refined Redesign ============ */}
       <section className="hero-section">
-        {/* Animated Background Globe */}
-        <div className="hero-globe-container">
-          <GlobeLive />
+        <div className="hero-center-angled">
+          <div className="hero-globe-container">
+            <GlobeLive />
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="hero-inner"
+          >
+            <div className="hero-badge animate-fade-in">
+              <Zap size={12} fill="currentColor" />
+              <span>NEXT-GEN AI COLLABORATION</span>
+            </div>
+            <h1 className="hero-title">WIIBUILD</h1>
+            <p className="hero-subtitle">
+              COLLABORATIVE AI DEVELOPMENT PLATFORM
+            </p>
+            <div className="hero-actions">
+              <Link href="/login" className="hero-btn-primary">
+                Start Building <ArrowRight size={16} />
+              </Link>
+              <Link href="#how-it-works" className="hero-btn-secondary">
+                Learn More
+              </Link>
+            </div>
+            <div style={{ marginTop: '56px', opacity: 0.8 }}>
+              <LiveIndicators />
+            </div>
+          </motion.div>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="hero-inner"
-        >
-          <div className="hero-badge animate-fade-in">
-            <Zap size={12} fill="currentColor" />
-            <span>Next-Gen AI Collaboration</span>
+        {/* Orbital Decorations */}
+        <div className="hero-orbital-left">
+          <div className="hero-orbital-dot"></div>
+        </div>
+        <div className="hero-orbital-right">
+          <div className="hero-orbital-dot"></div>
+        </div>
+
+
+
+        <div className="hero-left-panel">
+          <div className="hero-feature-icon">
+            <Users size={20} color="#C9A96A" />
           </div>
-          <h1 className="hero-title">WIIBUILD</h1>
-          <p className="hero-subtitle">
-            Collaborative AI Development Platform
+          <h3 className="hero-feature-title">Build Together</h3>
+          <p className="hero-feature-desc">
+            Collaborate with your team<br />
+            in real-time, from idea to<br />
+            deployment.
           </p>
-          <div className="hero-actions">
-            <Link href="/login" className="hero-btn-primary">
-              Start Building <ArrowRight size={16} />
-            </Link>
-            <Link href="#how-it-works" className="hero-btn-secondary">
-              Learn More
-            </Link>
+        </div>
+
+        <div className="hero-right-panel">
+          <div className="hero-feature-icon">
+            <Layers size={20} color="#C9A96A" />
           </div>
-          <div style={{ marginTop: '64px', opacity: 0.8 }}>
-            <LiveIndicators />
+          <h3 className="hero-feature-title">Build Faster</h3>
+          <p className="hero-feature-desc">
+            Leverage AI to turn ideas<br />
+            into powerful applications<br />
+            in minutes.
+          </p>
+        </div>
+
+        <div className="hero-bottom-left">
+          <span className="hero-bottom-small">MORE PEOPLE</span><br />
+          <strong className="hero-bottom-large">BETTER SOFTWARE</strong>
+          <div className="hero-bottom-underline"></div>
+        </div>
+
+        <div className="hero-bottom-right">
+          <div className="hero-cursive-block">
+            <span className="hero-cursive-text">Ideas</span><br />
+            <span className="hero-cursive-text" style={{ marginLeft: '12px' }}>Build a Brighter</span><br />
+            <span className="hero-cursive-text" style={{ marginLeft: '24px' }}>Tomorrow</span>
+            <div className="hero-cursive-underline"></div>
           </div>
-        </motion.div>
+        </div>
       </section>
 
       {/* ============ STATEMENT — White Section ============ */}
@@ -322,16 +372,311 @@ export default function HomePage() {
           min-height: 100vh;
         }
 
+        @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&display=swap');
+
         /* ── HERO ── */
         .hero-section {
-          background: #0f0f0f;
-          min-height: 95vh;
+          background: #F7F7F5;
+          min-height: 100vh;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 120px 24px 80px;
           position: relative;
           overflow: hidden;
+        }
+
+        .hero-center-angled {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background: #0B0B0B;
+          clip-path: polygon(16.5% 0, 83.5% 0, 71% 100%, 29% 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1;
+        }
+
+        .hero-inner {
+          text-align: center;
+          position: relative;
+          z-index: 1;
+          width: 100%;
+          padding: 0 40px;
+        }
+
+        .hero-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          background: rgba(20, 18, 15, 0.4);
+          color: #C9A96A;
+          padding: 6px 14px;
+          border-radius: 99px;
+          font-size: 0.6875rem;
+          font-weight: 600;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          margin-bottom: 24px;
+          border: 1px solid rgba(201, 169, 106, 0.25);
+          box-shadow: 0 0 15px rgba(201, 169, 106, 0.05);
+        }
+
+        .hero-title {
+          font-size: clamp(4rem, 11vw, 11rem);
+          font-weight: 900;
+          color: #ffffff;
+          letter-spacing: -0.05em;
+          line-height: 0.85;
+          margin-bottom: 16px;
+          font-family: 'Inter', sans-serif;
+        }
+
+        .hero-subtitle {
+          font-size: 0.8125rem;
+          font-weight: 400;
+          color: #888888;
+          letter-spacing: 0.25em;
+          text-transform: uppercase;
+          margin-bottom: 40px;
+        }
+
+        .hero-actions {
+          display: flex;
+          gap: 12px;
+          justify-content: center;
+          flex-wrap: wrap;
+        }
+
+        .hero-btn-primary {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 12px 28px;
+          background: #C9A96A;
+          color: #000;
+          border-radius: 4px;
+          font-weight: 600;
+          font-size: 0.875rem;
+          text-decoration: none;
+          transition: all 0.2s ease;
+        }
+        .hero-btn-primary:hover {
+          background: #d9b878;
+        }
+
+        .hero-btn-secondary {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 12px 28px;
+          background: transparent;
+          color: #aaaaaa;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 4px;
+          font-weight: 500;
+          font-size: 0.875rem;
+          text-decoration: none;
+          transition: all 0.2s ease;
+        }
+        .hero-btn-secondary:hover {
+          background: rgba(255,255,255,0.02);
+          color: #cccccc;
+        }
+
+        /* Orbital Decorations */
+        .hero-orbital-left {
+          position: absolute;
+          top: 50%;
+          left: -25vw;
+          width: 44vw;
+          height: 68vh;
+          transform: translateY(-50%);
+          border-right: 1px solid rgba(0,0,0,0.12);
+          border-radius: 50%;
+          z-index: 1;
+        }
+        .hero-orbital-left .hero-orbital-dot {
+          position: absolute;
+          top: 42%;
+          right: -2px;
+          transform: translateY(-50%);
+          width: 9px;
+          height: 9px;
+          background: #C9A96A;
+          border-radius: 50%;
+        }
+
+        .hero-orbital-right {
+          position: absolute;
+          top: 50%;
+          right: -25vw;
+          width: 44vw;
+          height: 68vh;
+          transform: translateY(-50%);
+          border-left: 1px solid rgba(0,0,0,0.12);
+          border-radius: 50%;
+          z-index: 1;
+        }
+        .hero-orbital-right .hero-orbital-dot {
+          position: absolute;
+          top: 42%;
+          left: -2px;
+          transform: translateY(-50%);
+          width: 9px;
+          height: 9px;
+          background: #C9A96A;
+          border-radius: 50%;
+        }
+
+        /* Top Left */
+        .hero-top-left {
+          position: absolute;
+          top: 40px;
+          left: 48px;
+          z-index: 2;
+        }
+        .hero-logo-text {
+          font-size: 1.125rem;
+          font-weight: 900;
+          color: #111;
+          letter-spacing: -0.04em;
+        }
+
+        /* Top Right */
+        .hero-top-right {
+          position: absolute;
+          top: 32px;
+          right: 48px;
+          z-index: 2;
+          display: flex;
+          align-items: center;
+          gap: 24px;
+        }
+        .hero-nav-link {
+          font-size: 0.8125rem;
+          font-weight: 500;
+          color: #444;
+          text-decoration: none;
+        }
+        .hero-nav-btn {
+          font-size: 0.8125rem;
+          font-weight: 600;
+          background: #D1B06F;
+          color: #111;
+          padding: 8px 20px;
+          border-radius: 4px;
+          text-decoration: none;
+          transition: background 0.2s;
+        }
+        .hero-nav-btn:hover {
+          background: #e0be7a;
+        }
+
+        /* Panels */
+        .hero-left-panel {
+          position: absolute;
+          left: 4vw;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 2;
+          max-width: 220px;
+        }
+        .hero-right-panel {
+          position: absolute;
+          right: 4vw;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 2;
+          max-width: 220px;
+          text-align: right;
+        }
+        .hero-feature-icon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 48px;
+          height: 48px;
+          border-radius: 12px;
+          background: #FCFAf6;
+          border: 1px solid #EFEBD9;
+          margin-bottom: 16px;
+        }
+        .hero-feature-title {
+          font-size: 1rem;
+          font-weight: 600;
+          color: #222;
+          margin-bottom: 8px;
+        }
+        .hero-feature-desc {
+          font-size: 0.8125rem;
+          color: #666;
+          line-height: 1.6;
+        }
+
+        /* Bottom texts */
+        .hero-bottom-left {
+          position: absolute;
+          bottom: 40px;
+          left: 48px;
+          z-index: 2;
+          line-height: 1.4;
+        }
+        .hero-bottom-small {
+          font-size: 0.6875rem;
+          color: #888;
+          font-weight: 500;
+          letter-spacing: 0.15em;
+        }
+        .hero-bottom-large {
+          font-size: 0.8125rem;
+          color: #444;
+          letter-spacing: 0.1em;
+          font-weight: 600;
+        }
+        .hero-bottom-underline {
+          height: 2px;
+          width: 32px;
+          background: #C9A96A;
+          margin-top: 6px;
+        }
+
+        .hero-bottom-right {
+          position: absolute;
+          bottom: 40px;
+          right: 48px;
+          z-index: 2;
+          line-height: 1.1;
+          text-align: right;
+        }
+        .hero-cursive-block {
+          display: inline-block;
+          text-align: left;
+        }
+        .hero-cursive-text {
+          font-family: 'Caveat', cursive;
+          font-size: 2.2rem;
+          color: #999;
+          display: inline-block;
+        }
+        .hero-cursive-underline {
+          height: 1px;
+          width: 40px;
+          background: #C9A96A;
+          margin-top: 8px;
+          margin-left: 24px;
+        }
+
+        @media (max-width: 1024px) {
+          .hero-center-angled {
+            clip-path: none;
+            background: #0B0B0B;
+          }
+          .hero-left-panel, .hero-right-panel, .hero-bottom-left, .hero-bottom-right, .hero-top-left, .hero-top-right, .hero-orbital-left, .hero-orbital-right {
+            display: none !important;
+          }
         }
 
         .hero-globe-container {

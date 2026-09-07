@@ -41,36 +41,34 @@ export function LiveIndicators() {
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "0.4rem",
-              padding: "6px 12px",
-              background: "var(--surface-2)",
-              border: "1px solid var(--border)",
-              borderRadius: "8px",
+              gap: "6px",
+              padding: "4px 10px",
+              background: "rgba(255, 255, 255, 0.03)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "6px",
               whiteSpace: "nowrap",
             }}
           >
             <span style={{
-              width: 6, height: 6,
-              background: "var(--accent)",
+              width: 5, height: 5,
+              background: "#C9A96A",
               borderRadius: "50%",
-              boxShadow: "0 0 6px var(--accent)",
+              boxShadow: "0 0 5px #C9A96A",
               animation: "live-pulse 1.5s ease-in-out infinite",
               flexShrink: 0,
             }} />
             <span style={{
-              fontFamily: "monospace",
-              fontSize: "0.6rem",
+              fontFamily: "Inter, sans-serif",
+              fontSize: "0.625rem",
               fontWeight: 600,
-              letterSpacing: "0.08em",
-              color: "var(--accent)",
-              textTransform: "uppercase" as const,
+              letterSpacing: "0.05em",
+              color: "#C9A96A",
             }}>LIVE</span>
             <span style={{
-              fontFamily: "inherit",
+              fontFamily: "Inter, sans-serif",
               fontSize: "0.6875rem",
-              color: "var(--text-secondary)",
-              paddingLeft: "0.4rem",
-              borderLeft: "1px solid var(--border)",
+              color: "#888888",
+              paddingLeft: "6px",
             }}>
               {Math.floor(liveViewers * (0.3 + 0.7 * Math.pow(0.6, i))).toLocaleString()} active
             </span>
