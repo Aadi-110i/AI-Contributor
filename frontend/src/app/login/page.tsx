@@ -120,13 +120,6 @@ export default function LoginPage() {
           <span className="auth-subtitle">IDEAS MEET EXECUTION</span>
         </header>
 
-        {/* Central Connector */}
-        <div className="auth-connector">
-          <div className="connector-line-top"></div>
-          <div className="connector-dot"></div>
-          <div className="connector-line-bottom"></div>
-        </div>
-
         {/* Auth Card */}
         <div className="auth-card">
 
@@ -400,33 +393,6 @@ export default function LoginPage() {
           transform: scaleX(1.1);
           line-height: 1;
           margin: 0;
-        }
-
-        .auth-connector {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          width: 100%;
-        }
-
-        .connector-line-top {
-          width: 1px;
-          height: 25px;
-          background: rgba(0,0,0,0.2);
-        }
-
-        .connector-dot {
-          width: 16px;
-          height: 16px;
-          background: linear-gradient(135deg, #E6CD8F 0%, #B89650 100%);
-          border-radius: 50%;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.4);
-        }
-
-        .connector-line-bottom {
-          width: 1px;
-          height: 20px;
-          background: rgba(255,255,255,0.15);
         }
 
         /* Card */
