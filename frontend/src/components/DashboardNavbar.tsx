@@ -16,9 +16,14 @@ export default function DashboardNavbar() {
 
   return (
     <nav className="dash-nav">
-      {/* Left: Logo */}
+      {/* Left: Back + Logo */}
       <div className="dash-nav-left">
-        <Link href="/" className="dash-logo">
+        <Link href="/" className="nav-back-home" title="Back to Home">
+          <ArrowLeft size={14} />
+          <span>Home</span>
+        </Link>
+        <div className="dash-left-divider"></div>
+        <Link href="/dashboard" className="dash-logo">
           WIIBUILD
         </Link>
       </div>
@@ -49,10 +54,6 @@ export default function DashboardNavbar() {
           <ChevronDown size={14} className="nav-chevron" />
         </div>
 
-        <Link href="/" className="nav-back-home" title="Back to Home">
-          <ArrowLeft size={14} />
-          <span>Home</span>
-        </Link>
 
         <button className="nav-icon-btn nav-logout" onClick={handleLogout} aria-label="Sign out" title="Sign out">
           <LogOut size={16} />
@@ -78,7 +79,15 @@ export default function DashboardNavbar() {
         .dash-nav-left {
           display: flex;
           align-items: center;
-          min-width: 160px;
+          gap: 12px;
+          min-width: 220px;
+        }
+
+        .dash-left-divider {
+          width: 1px;
+          height: 18px;
+          background: rgba(255,255,255,0.12);
+          flex-shrink: 0;
         }
 
         .dash-logo {
