@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, FolderOpen, Users2, Cpu, Layers, Activity, Rocket, Search, Bell, ChevronDown, LogOut } from 'lucide-react';
+import { Home, FolderOpen, Users2, Cpu, Layers, Activity, Rocket, Search, Bell, ChevronDown, LogOut, ArrowLeft } from 'lucide-react';
 
 export default function DashboardNavbar() {
   const pathname = usePathname();
@@ -48,6 +48,11 @@ export default function DashboardNavbar() {
           </div>
           <ChevronDown size={14} className="nav-chevron" />
         </div>
+
+        <Link href="/" className="nav-back-home" title="Back to Home">
+          <ArrowLeft size={14} />
+          <span>Home</span>
+        </Link>
 
         <button className="nav-icon-btn nav-logout" onClick={handleLogout} aria-label="Sign out" title="Sign out">
           <LogOut size={16} />
@@ -173,6 +178,27 @@ export default function DashboardNavbar() {
 
         .nav-chevron {
           color: #555;
+        }
+
+        .nav-back-home {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          text-decoration: none;
+          color: #888;
+          font-size: 0.8125rem;
+          font-weight: 500;
+          padding: 6px 12px;
+          border-radius: 6px;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: transparent;
+          transition: all 0.2s ease;
+        }
+
+        .nav-back-home:hover {
+          color: #fff;
+          border-color: rgba(255,255,255,0.18);
+          background: rgba(255,255,255,0.05);
         }
       `}</style>
     </nav>

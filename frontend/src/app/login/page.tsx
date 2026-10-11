@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, User } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, User, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 
@@ -73,6 +73,12 @@ export default function LoginPage() {
 
   return (
     <div className="auth-root">
+
+      {/* Floating Back to Home */}
+      <Link href="/" className="auth-back-btn">
+        <ArrowLeft size={15} />
+        <span>Home</span>
+      </Link>
 
       {/* Background White Glow */}
       <div className="auth-glow"></div>
@@ -283,6 +289,37 @@ export default function LoginPage() {
           color: white;
           font-family: 'Inter', sans-serif;
           align-items: center;
+        }
+
+        /* Back to Home floating pill */
+        .auth-back-btn {
+          position: fixed;
+          top: 24px;
+          left: 24px;
+          z-index: 200;
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          text-decoration: none;
+          color: rgba(255,255,255,0.75);
+          font-size: 0.8125rem;
+          font-weight: 500;
+          font-family: 'Inter', sans-serif;
+          letter-spacing: 0.01em;
+          padding: 8px 16px;
+          border-radius: 100px;
+          background: rgba(255,255,255,0.06);
+          border: 1px solid rgba(255,255,255,0.12);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          transition: all 0.25s ease;
+        }
+
+        .auth-back-btn:hover {
+          color: #fff;
+          background: rgba(255,255,255,0.11);
+          border-color: rgba(255,255,255,0.22);
+          transform: translateX(-2px);
         }
 
         /* The Massive White Glow */
