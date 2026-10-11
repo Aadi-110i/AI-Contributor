@@ -51,8 +51,9 @@ export default function Navbar() {
                 <span style={{
                     fontSize: '1.125rem',
                     fontWeight: 900,
-                    color: '#ffffff',
+                    color: (!scrolled && isHome) ? '#111111' : '#ffffff',
                     letterSpacing: '-0.04em',
+                    transition: 'color 0.3s ease',
                 }}>
                     WIIBUILD
                 </span>
@@ -101,11 +102,11 @@ export default function Navbar() {
                             href="/login"
                             style={{
                                 textDecoration: 'none',
-                                color: 'rgba(255,255,255,0.7)',
+                                color: (!scrolled && isHome) ? 'rgba(17,17,17,0.7)' : 'rgba(255,255,255,0.7)',
                                 fontWeight: 500,
                                 fontSize: '0.8125rem',
                                 padding: '6px 14px',
-                                transition: 'color 0.2s',
+                                transition: 'color 0.3s ease',
                             }}
                         >
                             Sign In
