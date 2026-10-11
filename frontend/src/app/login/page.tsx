@@ -155,48 +155,60 @@ export default function LoginPage() {
               {isSignUp && (
                 <div className="input-group">
                   <label>Username</label>
-                  <div className="input-wrapper">
-                    <User className="input-icon" size={16} />
-                    <input
-                      type="text"
-                      placeholder="you"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      required
-                    />
+                  <div className="input-row">
+                    <div className="input-icon-box">
+                      <User size={16} />
+                    </div>
+                    <div className="input-wrapper">
+                      <input
+                        type="text"
+                        placeholder="you"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        required
+                      />
+                    </div>
                   </div>
                 </div>
               )}
 
               <div className="input-group">
                 <label>Email address</label>
-                <div className="input-wrapper">
-                  <Mail className="input-icon" size={16} />
-                  <input
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
+                <div className="input-row">
+                  <div className="input-icon-box">
+                    <Mail size={16} />
+                  </div>
+                  <div className="input-wrapper">
+                    <input
+                      type="email"
+                      placeholder="you@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
                 </div>
               </div>
 
               <div className="input-group">
                 <label>Password</label>
-                <div className="input-wrapper">
-                  <Lock className="input-icon" size={16} />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                  />
-                  <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
+                <div className="input-row">
+                  <div className="input-icon-box">
+                    <Lock size={16} />
+                  </div>
+                  <div className="input-wrapper">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={6}
+                    />
+                    <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -457,20 +469,41 @@ export default function LoginPage() {
           font-size: 0.75rem;
           color: rgba(255,255,255,0.6);
           font-weight: 500;
+          margin-bottom: 2px;
+        }
+
+        .input-row {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          width: 100%;
+        }
+
+        .input-icon-box {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 42px;
+          height: 42px;
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          color: rgba(255, 255, 255, 0.45);
+          flex-shrink: 0;
+          transition: all 0.2s ease;
+        }
+
+        .input-row:focus-within .input-icon-box {
+          border-color: rgba(209, 176, 111, 0.5);
+          color: #D1B06F;
+          background: rgba(209, 176, 111, 0.06);
         }
 
         .input-wrapper {
           position: relative;
           display: flex;
           align-items: center;
-        }
-
-        .input-icon {
-          position: absolute;
-          left: 15px;
-          color: rgba(255,255,255,0.4);
-          pointer-events: none;
-          z-index: 2;
+          flex: 1;
         }
 
         .input-wrapper input {
@@ -478,11 +511,12 @@ export default function LoginPage() {
           background: rgba(0, 0, 0, 0.3);
           border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 8px;
-          padding: 12px 14px 12px 46px;
+          padding: 12px 14px;
           font-size: 0.875rem;
           color: white;
           outline: none;
           transition: all 0.2s ease;
+          box-sizing: border-box;
         }
 
         .input-wrapper input:focus {
@@ -491,7 +525,7 @@ export default function LoginPage() {
         }
 
         .input-wrapper input::placeholder {
-          color: rgba(255,255,255,0.2);
+          color: rgba(255,255,255,0.25);
         }
 
         .password-toggle {
