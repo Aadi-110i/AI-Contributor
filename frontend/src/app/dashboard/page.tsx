@@ -3,14 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, type Project } from '@/lib/api';
-import ProjectCard from '@/components/ProjectCard';
-import { Plus, X, FolderOpen, Users2, Copy, Check, Link as LinkIcon, Activity, Layers, TrendingUp, Globe2 } from 'lucide-react';
-import { Sidebar } from '@/components/Sidebar';
-import dynamic from 'next/dynamic';
-
-const TeamShowcase = dynamic(() => import('@/components/ui/team-showcase'), { ssr: false });
-
-import { GlobeLive } from '@/components/ui/cobe-globe-live';
+import DashboardNavbar from '@/components/DashboardNavbar';
+import IdeasOrbit from '@/components/dashboard/IdeasOrbit';
+import RightColumn from '@/components/dashboard/RightColumn';
+import RecentProjects from '@/components/dashboard/RecentProjects';
+import { Plus, X, Check, Copy, Link as LinkIcon } from 'lucide-react';
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -19,10 +16,40 @@ function getGreeting(): string {
   return 'Good evening';
 }
 
+const DEMO: Project[] = [
+  {
+    id: 'demo-1', name: 'NovaChat', description: 'AI-powered chat platform',
+    owner_id: 'demo', status: 'active', created_at: '2026-04-10T12:00:00Z',
+    modules: ['frontend', 'backend', 'authentication', 'database', 'integrations'].map((t, i) => ({
+      id: `m${i}`, project_id: 'demo-1', type: t as any, assigned_to: null, status: 'in_progress' as any, code_path: null, updated_at: '',
+    })),
+  },
+  {
+    id: 'demo-2', name: 'PixelForge', description: 'AI image generation tool',
+    owner_id: 'demo', status: 'active', created_at: '2026-04-08T09:00:00Z',
+    modules: ['frontend', 'backend', 'authentication', 'database', 'integrations'].map((t, i) => ({
+      id: `m${i + 5}`, project_id: 'demo-2', type: t as any, assigned_to: null, status: 'standardized' as any, code_path: null, updated_at: '',
+    })),
+  },
+  {
+    id: 'demo-3', name: 'DocuMind', description: 'Smart documentation',
+    owner_id: 'demo', status: 'active', created_at: '2026-04-06T15:00:00Z',
+    modules: ['frontend', 'backend'].map((t, i) => ({
+      id: `m${i + 10}`, project_id: 'demo-3', type: t as any, assigned_to: null, status: 'merged' as any, code_path: null, updated_at: '',
+    })),
+  },
+  {
+    id: 'demo-4', name: 'FlowOps', description: 'Automation workflows',
+    owner_id: 'demo', status: 'error', created_at: '2026-04-01T10:00:00Z',
+    modules: ['frontend'].map((t, i) => ({
+      id: `m${i + 12}`, project_id: 'demo-4', type: t as any, assigned_to: null, status: 'unassigned' as any, code_path: null, updated_at: '',
+    })),
+  },
+];
+
 export default function DashboardPage() {
   const router = useRouter();
-  const [owned, setOwned] = useState<Project[]>([]);
-  const [participating, setParticipating] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState('');
@@ -41,18 +68,11 @@ export default function DashboardPage() {
   const load = async () => {
     try {
       const data = await api.projects.list();
-      // If we got real data from the backend, use it
-      if (data.owned || data.participating) {
-        setOwned(data.owned || []);
-        setParticipating(data.participating || []);
-      } else {
-        setOwned(DEMO);
-      }
-    } catch (err) {
-      console.warn('API unavailable, falling back to static DEMO data', err);
-      setOwned(DEMO);
-    } finally { 
-      setLoading(false); 
+      setProjects(data.owned?.length ? data.owned : DEMO);
+    } catch {
+      setProjects(DEMO);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,14 +82,17 @@ export default function DashboardPage() {
     setCreating(true);
     try {
       const p = await api.projects.create({ name, description: desc });
-      setOwned((prev) => [p, ...prev]);
+      setProjects((prev) => [p, ...prev]);
       setCreatedProject(p);
     } catch {
       const demo: Project = {
-        id: `demo-${Date.now()}`, name, description: desc, owner_id: 'demo', status: 'active', created_at: new Date().toISOString(),
-        modules: ['frontend', 'backend', 'authentication', 'database', 'integrations'].map((t, i) => ({ id: `m${i}`, project_id: '', type: t as any, assigned_to: null, status: 'unassigned' as any, code_path: null, updated_at: '' })),
+        id: `demo-${Date.now()}`, name, description: desc,
+        owner_id: 'demo', status: 'active', created_at: new Date().toISOString(),
+        modules: ['frontend', 'backend', 'authentication', 'database', 'integrations'].map((t, i) => ({
+          id: `m${i}`, project_id: '', type: t as any, assigned_to: null, status: 'unassigned' as any, code_path: null, updated_at: '',
+        })),
       };
-      setOwned((prev) => [demo, ...prev]);
+      setProjects((prev) => [demo, ...prev]);
       setCreatedProject(demo);
     } finally {
       setCreating(false);
@@ -88,13 +111,8 @@ export default function DashboardPage() {
 
   const copyToClipboard = (text: string, type: 'id' | 'link') => {
     navigator.clipboard.writeText(text);
-    if (type === 'id') {
-      setIdCopied(true);
-      setTimeout(() => setIdCopied(false), 2000);
-    } else {
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
-    }
+    if (type === 'id') { setIdCopied(true); setTimeout(() => setIdCopied(false), 2000); }
+    else { setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000); }
   };
 
   const handleGenerateInvite = async () => {
@@ -103,533 +121,212 @@ export default function DashboardPage() {
       const { link } = await api.invites.create(createdProject.id);
       setInviteLink(link);
     } catch {
-      setInviteLink(`${window.location.origin}/invite/demo-token-${Date.now()}`);
+      setInviteLink(`${window.location.origin}/invite/demo-${Date.now()}`);
     }
   };
 
-  // Stats
-  const totalModules = owned.reduce((sum, p) => sum + (p.modules?.length || 0), 0);
-  const completedModules = owned.reduce((sum, p) => sum + (p.modules?.filter(m => ['merged', 'standardized', 'uploaded'].includes(m.status)).length || 0), 0);
+  const totalModules = projects.reduce((s, p) => s + (p.modules?.length || 0), 0);
+  const completedModules = projects.reduce((s, p) => s + (p.modules?.filter(m => ['merged', 'standardized', 'uploaded'].includes(m.status)).length || 0), 0);
 
   return (
-    <div className="db-root">
-      <Sidebar />
+    <div className="dash-layout">
+      <DashboardNavbar />
 
-      <div className="db-main">
-        {/* ── Welcome Section ── */}
-        <div className="db-welcome animate-fade-up">
-          <div className="db-welcome-text">
-            <h1>{getGreeting()}, Aadarsh 👋</h1>
-            <p>Here&apos;s what&apos;s happening with your projects today.</p>
-          </div>
-          <button onClick={() => setShowCreate(true)} className="btn-primary">
-            <Plus size={15} /> New Project
-          </button>
-        </div>
-
-        {/* ── Stat Cards ── */}
-        <div className="db-stats animate-fade-up" style={{ animationDelay: '0.05s' }}>
-          <StatCard
-            icon={<FolderOpen size={20} />}
-            label="Projects"
-            value={owned.length}
-            color="var(--accent)"
-            bg="var(--accent-muted)"
-          />
-          <StatCard
-            icon={<Users2 size={20} />}
-            label="Collaborations"
-            value={participating.length}
-            color="var(--info)"
-            bg="rgba(106, 155, 212, 0.1)"
-          />
-          <StatCard
-            icon={<Layers size={20} />}
-            label="Modules"
-            value={`${completedModules}/${totalModules}`}
-            color="var(--success)"
-            bg="rgba(109, 184, 122, 0.1)"
-          />
-          <StatCard
-            icon={<TrendingUp size={20} />}
-            label="Active"
-            value={owned.filter(p => p.status === 'active').length}
-            color="var(--warning)"
-            bg="rgba(212, 160, 74, 0.1)"
-          />
-        </div>
-
-        {/* Create modal */}
-        {showCreate && (
-          <div onClick={handleResetCreate} className="db-modal-backdrop">
-            {!createdProject ? (
-              <form onClick={(e) => e.stopPropagation()} onSubmit={handleCreate} className="db-modal animate-fade-up">
-                <button type="button" onClick={handleResetCreate} className="db-modal-close">
-                  <X size={18} />
-                </button>
-                <h3 className="db-modal-title">New Project</h3>
-                <p className="db-modal-desc">Creates 5 modules ready to assign</p>
-                <div style={{ marginBottom: '14px' }}>
-                  <label className="label">Project Name</label>
-                  <input className="input" placeholder="My App" value={name} onChange={(e) => setName(e.target.value)} required autoFocus />
-                </div>
-                <div style={{ marginBottom: '20px' }}>
-                  <label className="label">Description <span style={{ color: 'var(--text-muted)', fontWeight: 400, textTransform: 'none' }}>(optional)</span></label>
-                  <input className="input" placeholder="What are you building?" value={desc} onChange={(e) => setDesc(e.target.value)} />
-                </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button type="button" className="btn-secondary" onClick={handleResetCreate} style={{ flex: 1 }}>Cancel</button>
-                  <button type="submit" className="btn-primary" disabled={creating} style={{ flex: 1, opacity: creating ? 0.6 : 1 }}>{creating ? 'Creating...' : 'Create'}</button>
-                </div>
-              </form>
-            ) : (
-              <div onClick={(e) => e.stopPropagation()} className="db-modal animate-fade-up" style={{ textAlign: 'center' }}>
-                <div className="db-modal-success-icon">
-                  <Check size={24} />
-                </div>
-                <h3 className="db-modal-title" style={{ marginTop: '16px' }}>Project Created!</h3>
-                <p className="db-modal-desc">Your project is ready. Share the ID or an invite link to start collaborating.</p>
-
-                <div className="db-modal-info-box">
-                  <label className="db-modal-info-label">Project ID</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <code className="db-modal-code">{createdProject.id}</code>
-                    <button onClick={() => copyToClipboard(createdProject.id, 'id')} className="db-modal-copy-btn" title="Copy ID">
-                      {idCopied ? <Check size={14} /> : <Copy size={14} />}
-                    </button>
-                  </div>
-                </div>
-
-                {inviteLink ? (
-                  <div className="db-modal-info-box" style={{ border: '1px solid rgba(201, 169, 110, 0.25)' }}>
-                    <label className="db-modal-info-label" style={{ color: 'var(--accent)' }}>Invite Link</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <code className="db-modal-code">{inviteLink}</code>
-                      <button onClick={() => copyToClipboard(inviteLink, 'link')} className="db-modal-copy-btn" title="Copy Link">
-                        {linkCopied ? <Check size={14} /> : <Copy size={14} />}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button onClick={handleGenerateInvite} className="btn-primary" style={{ width: '100%', marginBottom: '12px' }}>
-                    <LinkIcon size={14} style={{ marginRight: '8px' }} /> Generate Invite Link
-                  </button>
-                )}
-
-                <button onClick={handleResetCreate} className="btn-secondary" style={{ width: '100%' }}>
-                  Go to Dashboard
-                </button>
+      <main className="dash-main">
+        <div className="dash-grid">
+          {/* Left Column */}
+          <div className="dash-col-left">
+            <div className="left-column">
+              <div className="eyebrow">
+                <span>BUILD</span><span className="eyebrow-dot"></span>
+                <span>COLLABORATE</span><span className="eyebrow-dot"></span>
+                <span>SHIP</span>
               </div>
-            )}
+
+              <div className="greeting-block">
+                <h2 className="greeting-sub">{getGreeting()},</h2>
+                <h1 className="greeting-main">Aadarsh 👋</h1>
+                <p className="greeting-desc">Turn your ideas into real products with the power of AI.</p>
+              </div>
+
+              <button className="new-project-btn" onClick={() => setShowCreate(true)}>
+                <div className="btn-left">
+                  <Plus size={16} style={{ color: '#C9A45F' }} />
+                  <span>New Project</span>
+                </div>
+                <span className="btn-arrow">→</span>
+              </button>
+
+              <div className="stats-list">
+                <div className="stat-item" onClick={() => {}}>
+                  <span className="stat-val">{projects.length}</span>
+                  <span className="stat-label">Projects</span>
+                  <span className="stat-arrow">→</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-val">8</span>
+                  <span className="stat-label">Collaborators</span>
+                  <span className="stat-arrow">→</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-val">{totalModules}</span>
+                  <span className="stat-label">Modules</span>
+                  <span className="stat-arrow">→</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-val">{completedModules}</span>
+                  <span className="stat-label">Deployments</span>
+                  <span className="stat-arrow">→</span>
+                </div>
+              </div>
+
+              <div className="quote-block">
+                <p className="quote-text">&ldquo;Small ideas<br/>build big tomorrows.&rdquo;</p>
+                <div className="quote-line"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Center */}
+          <div className="dash-col-center">
+            <IdeasOrbit onNewProject={() => setShowCreate(true)} />
+          </div>
+
+          {/* Right */}
+          <div className="dash-col-right">
+            <RightColumn />
+          </div>
+        </div>
+
+        {/* Recent Projects */}
+        {!loading && (
+          <div className="dash-bottom">
+            <RecentProjects projects={projects} onNewProject={() => setShowCreate(true)} />
           </div>
         )}
+      </main>
 
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '80px 0' }}>
-            <div className="spinner" style={{ margin: '0 auto 12px' }} />
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Loading your workspace...</p>
-          </div>
-        ) : (
-          <div className="db-content">
-            {/* My Projects */}
-            <section id="projects" className="db-section animate-fade-up" style={{ animationDelay: '0.1s' }}>
-              <div className="db-section-header">
-                <div className="db-section-icon" style={{ background: 'var(--accent-muted)', color: 'var(--accent)' }}>
-                  <FolderOpen size={18} />
-                </div>
-                <h2 className="db-section-title">My Projects</h2>
-                <span className="badge badge-accent" style={{ marginLeft: 'auto' }}><span className="badge-dot" />{owned.length}</span>
+      {/* ── New Project Modal ── */}
+      {showCreate && (
+        <div className="modal-backdrop" onClick={handleResetCreate}>
+          {!createdProject ? (
+            <form className="modal-box" onClick={(e) => e.stopPropagation()} onSubmit={handleCreate}>
+              <button type="button" className="modal-close" onClick={handleResetCreate}><X size={18} /></button>
+              <h3 className="modal-title">New Project</h3>
+              <p className="modal-desc">Creates 5 modules ready to assign.</p>
+              <div className="modal-field">
+                <label className="modal-label">Project Name</label>
+                <input className="modal-input" placeholder="My App" value={name} onChange={(e) => setName(e.target.value)} required autoFocus />
               </div>
-              {owned.length > 0 ? (
-                <div className="db-project-grid stagger">
-                  {owned.map((p) => <ProjectCard key={p.id} project={p} />)}
+              <div className="modal-field">
+                <label className="modal-label">Description <span className="modal-optional">(optional)</span></label>
+                <input className="modal-input" placeholder="What are you building?" value={desc} onChange={(e) => setDesc(e.target.value)} />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn-cancel" onClick={handleResetCreate}>Cancel</button>
+                <button type="submit" className="btn-create" disabled={creating}>{creating ? 'Creating...' : 'Create'}</button>
+              </div>
+            </form>
+          ) : (
+            <div className="modal-box" onClick={(e) => e.stopPropagation()} style={{ textAlign: 'center' }}>
+              <div className="success-icon"><Check size={24} /></div>
+              <h3 className="modal-title" style={{ marginTop: '16px' }}>Project Created!</h3>
+              <p className="modal-desc">Your project is ready. Share the ID or an invite link to collaborate.</p>
+
+              <div className="info-box">
+                <label className="info-label">Project ID</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <code className="info-code">{createdProject.id}</code>
+                  <button onClick={() => copyToClipboard(createdProject.id, 'id')} className="copy-btn" title="Copy ID">
+                    {idCopied ? <Check size={14} /> : <Copy size={14} />}
+                  </button>
+                </div>
+              </div>
+
+              {inviteLink ? (
+                <div className="info-box" style={{ border: '1px solid rgba(201,169,110,0.25)' }}>
+                  <label className="info-label" style={{ color: '#C9A45F' }}>Invite Link</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <code className="info-code">{inviteLink}</code>
+                    <button onClick={() => copyToClipboard(inviteLink, 'link')} className="copy-btn">{linkCopied ? <Check size={14} /> : <Copy size={14} />}</button>
+                  </div>
                 </div>
               ) : (
-                <div className="db-empty-state">
-                  <FolderOpen size={32} style={{ color: 'var(--text-muted)', marginBottom: '12px' }} />
-                  <p>No projects yet. Create your first one above!</p>
-                </div>
+                <button className="btn-create" style={{ width: '100%', marginBottom: '12px' }} onClick={handleGenerateInvite}>
+                  <LinkIcon size={14} style={{ marginRight: '8px' }} /> Generate Invite Link
+                </button>
               )}
-            </section>
+              <button className="btn-cancel" style={{ width: '100%' }} onClick={handleResetCreate}>Done</button>
+            </div>
+          )}
+        </div>
+      )}
 
-            {/* Collaborations */}
-            {participating.length > 0 && (
-              <section className="db-section animate-fade-up" style={{ animationDelay: '0.15s' }}>
-                <div className="db-section-header">
-                  <div className="db-section-icon" style={{ background: 'rgba(106, 155, 212, 0.1)', color: 'var(--info)' }}>
-                    <Users2 size={18} />
-                  </div>
-                  <h2 className="db-section-title">Collaborations</h2>
-                  <span className="badge badge-active" style={{ marginLeft: 'auto' }}><span className="badge-dot" />{participating.length}</span>
-                </div>
-                <div className="db-project-grid stagger">
-                  {participating.map((p) => <ProjectCard key={p.id} project={p} />)}
-                </div>
-              </section>
-            )}
+      <style jsx global>{`
+        body { margin: 0; font-family: 'Inter', sans-serif; background: #FAFAF8; }
 
-            {/* Team Members */}
-            <section className="db-section animate-fade-up" style={{ animationDelay: '0.2s' }}>
-              <div className="db-section-header">
-                <div className="db-section-icon" style={{ background: 'rgba(212, 160, 74, 0.1)', color: 'var(--warning)' }}>
-                  <Users2 size={18} />
-                </div>
-                <h2 className="db-section-title">Team Members</h2>
-              </div>
-              <TeamShowcase />
-            </section>
+        .dash-layout { min-height: 100vh; background: #FAFAF8; display: flex; flex-direction: column; }
+        .dash-main { flex: 1; width: 100%; max-width: 1600px; margin: 0 auto; padding: 40px 56px 80px; box-sizing: border-box; }
 
-            {/* Global Activity */}
-            <section id="globe" className="db-section animate-fade-up" style={{ animationDelay: '0.25s' }}>
-              <div className="db-section-header">
-                <div className="db-section-icon" style={{ background: 'var(--accent-muted)', color: 'var(--accent)' }}>
-                  <Globe2 size={18} />
-                </div>
-                <h2 className="db-section-title">Global Activity</h2>
-                <span className="badge badge-accent" style={{ marginLeft: 'auto' }}><span className="badge-dot" />Live</span>
-              </div>
-              <div style={{
-                borderRadius: 'var(--radius)',
-                overflow: 'hidden',
-                padding: '24px 16px',
-                background: 'linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%)',
-                border: '1px solid var(--border)',
-              }}>
-                <GlobeLive />
-              </div>
-            </section>
-          </div>
-        )}
-      </div>
+        .dash-grid { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 32px; width: 100%; }
+        .dash-col-left { display: flex; flex-direction: column; }
+        .dash-col-center { display: flex; justify-content: center; align-items: center; min-height: 580px; }
+        .dash-col-right { display: flex; flex-direction: column; }
+        .dash-bottom { margin-top: 16px; }
 
-      {/* ── Dashboard Styles ── */}
-      <style>{`
-                .db-root {
-                    position: relative;
-                    min-height: 100vh;
-                    background: var(--bg);
-                    transition: background 0.35s ease;
-                }
-                .db-main {
-                    position: relative;
-                    z-index: 1;
-                    padding: 84px 40px 80px;
-                    width: 100%;
-                    box-sizing: border-box;
-                    max-width: 1200px;
-                    margin: 0 auto;
-                }
-                @media (max-width: 768px) {
-                    .db-main {
-                        padding: 76px 16px 60px !important;
-                    }
-                }
+        /* Left Column */
+        .left-column { display: flex; flex-direction: column; height: 100%; }
+        .eyebrow { display: flex; align-items: center; gap: 12px; font-size: 0.6875rem; font-weight: 700; color: #888; letter-spacing: 0.2em; margin-bottom: 28px; }
+        .eyebrow-dot { width: 4px; height: 4px; border-radius: 50%; background: #C9A45F; }
+        .greeting-block { margin-bottom: 36px; }
+        .greeting-sub { font-size: 1.25rem; font-weight: 400; color: #333; margin: 0 0 4px 0; }
+        .greeting-main { font-size: 3rem; font-weight: 800; color: #111; margin: 0 0 16px 0; letter-spacing: -0.03em; line-height: 1.1; }
+        .greeting-desc { font-size: 0.9375rem; color: #666; line-height: 1.5; max-width: 280px; margin: 0; }
 
-                /* ── Welcome ── */
-                .db-welcome {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 28px;
-                    gap: 16px;
-                    flex-wrap: wrap;
-                }
-                .db-welcome h1 {
-                    font-size: 1.625rem;
-                    font-weight: 700;
-                    color: var(--text-white);
-                    letter-spacing: -0.03em;
-                    line-height: 1.3;
-                }
-                .db-welcome p {
-                    color: var(--text-secondary);
-                    font-size: 0.875rem;
-                    margin-top: 2px;
-                    line-height: 1.5;
-                }
-                @media (max-width: 640px) {
-                    .db-welcome {
-                        flex-direction: column;
-                        align-items: flex-start;
-                    }
-                    .db-welcome h1 { font-size: 1.375rem; }
-                }
+        .new-project-btn { background: #0B0B0B; color: #fff; border: none; border-radius: 12px; width: 100%; max-width: 260px; height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; font-size: 0.9375rem; font-weight: 500; cursor: pointer; margin-bottom: 44px; transition: transform 0.2s, background 0.2s; font-family: inherit; }
+        .new-project-btn:hover { background: #1a1a1a; transform: translateY(-2px); }
+        .btn-left { display: flex; align-items: center; gap: 12px; }
+        .btn-arrow { font-family: monospace; }
 
-                /* ── Stat Cards ── */
-                .db-stats {
-                    display: grid;
-                    grid-template-columns: repeat(4, 1fr);
-                    gap: 14px;
-                    margin-bottom: 28px;
-                }
-                @media (max-width: 1100px) {
-                    .db-stats { grid-template-columns: repeat(2, 1fr); }
-                }
-                @media (max-width: 540px) {
-                    .db-stats { grid-template-columns: 1fr; }
-                }
-                .db-stat-card {
-                    display: flex;
-                    align-items: center;
-                    gap: 16px;
-                    background: var(--surface);
-                    border: 1px solid var(--border);
-                    border-radius: var(--radius);
-                    padding: 24px;
-                    box-shadow: var(--card-shadow);
-                    transition: all 0.3s ease;
-                    position: relative;
-                    overflow: hidden;
-                }
-                .db-stat-card:hover {
-                    border-color: var(--accent-soft);
-                    box-shadow: var(--card-shadow-hover);
-                    transform: translateY(-4px);
-                }
-                .db-stat-card::after {
-                    content: '';
-                    position: absolute;
-                    bottom: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 2px;
-                    background: var(--accent);
-                    opacity: 0;
-                    transition: opacity 0.3s;
-                }
-                .db-stat-card:hover::after {
-                    opacity: 1;
-                }
-                .db-stat-icon {
-                    width: 48px;
-                    height: 48px;
-                    border-radius: 12px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    flex-shrink: 0;
-                    transition: transform 0.3s;
-                }
-                .db-stat-card:hover .db-stat-icon {
-                    transform: scale(1.1);
-                }
-                .db-stat-label {
-                    font-size: 0.75rem;
-                    font-weight: 600;
-                    color: var(--text-secondary);
-                    text-transform: uppercase;
-                    letter-spacing: 0.05em;
-                    margin-bottom: 4px;
-                }
-                .db-stat-value {
-                    font-size: 1.625rem;
-                    font-weight: 800;
-                    color: var(--text-white);
-                    letter-spacing: -0.02em;
-                    line-height: 1;
-                }
+        .stats-list { display: flex; flex-direction: column; gap: 18px; margin-bottom: auto; }
+        .stat-item { display: flex; align-items: center; gap: 16px; cursor: pointer; padding: 4px 0; }
+        .stat-val { font-size: 1.5rem; font-weight: 700; color: #111; width: 45px; }
+        .stat-label { font-size: 0.9375rem; font-weight: 500; color: #666; flex: 1; transition: color 0.2s; }
+        .stat-arrow { color: #ccc; font-family: monospace; transition: all 0.2s; }
+        .stat-item:hover .stat-label { color: #111; }
+        .stat-item:hover .stat-arrow { color: #111; transform: translateX(4px); }
 
-                /* ── Content ── */
-                .db-content {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 20px;
-                }
-                .db-section {
-                    background: var(--surface);
-                    border: 1px solid var(--border);
-                    border-radius: var(--radius-lg);
-                    padding: 24px;
-                    box-shadow: var(--card-shadow);
-                    transition: all 0.25s ease;
-                }
-                .db-section:hover {
-                    border-color: var(--border-hover);
-                }
-                .db-section-header {
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    margin-bottom: 20px;
-                }
-                .db-section-icon {
-                    width: 36px;
-                    height: 36px;
-                    border-radius: 10px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-                .db-section-title {
-                    font-size: 1rem;
-                    font-weight: 700;
-                    color: var(--text-white);
-                }
+        .quote-block { margin-top: 48px; padding-bottom: 20px; }
+        .quote-text { font-family: Georgia, serif; font-style: italic; font-size: 1.0625rem; color: #444; line-height: 1.4; margin: 0 0 14px 0; }
+        .quote-line { width: 36px; height: 2px; background: #C9A45F; opacity: 0.5; }
 
-                /* ── Project Grid ── */
-                .db-project-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-                    gap: 14px;
-                }
-                @media (max-width: 640px) {
-                    .db-project-grid {
-                        grid-template-columns: 1fr;
-                    }
-                }
+        /* Modal */
+        .modal-backdrop { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 24px; }
+        .modal-box { background: #fff; border: 1px solid #E7E5E1; border-radius: 20px; padding: 32px; max-width: 440px; width: 100%; position: relative; box-shadow: 0 24px 60px rgba(0,0,0,0.12); }
+        .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: #888; cursor: pointer; }
+        .modal-close:hover { color: #111; }
+        .modal-title { font-size: 1.125rem; font-weight: 700; color: #111; margin: 0 0 4px 0; }
+        .modal-desc { color: #666; font-size: 0.8125rem; margin: 0 0 24px 0; line-height: 1.5; }
+        .modal-field { margin-bottom: 16px; }
+        .modal-label { display: block; font-size: 0.75rem; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+        .modal-optional { font-weight: 400; text-transform: none; color: #aaa; }
+        .modal-input { width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #E7E5E1; border-radius: 8px; font-size: 0.875rem; font-family: inherit; color: #111; outline: none; }
+        .modal-input:focus { border-color: #C9A45F; }
+        .modal-actions { display: flex; gap: 10px; }
+        .btn-cancel { flex: 1; padding: 10px; border: 1px solid #E7E5E1; background: transparent; border-radius: 8px; font-size: 0.875rem; font-family: inherit; cursor: pointer; color: #666; }
+        .btn-cancel:hover { background: #f5f5f5; }
+        .btn-create { flex: 1; padding: 10px; background: #111; color: #fff; border: none; border-radius: 8px; font-size: 0.875rem; font-family: inherit; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+        .btn-create:hover { background: #000; }
+        .btn-create:disabled { opacity: 0.5; cursor: not-allowed; }
+        .success-icon { width: 48px; height: 48px; border-radius: 50%; background: rgba(34,197,94,0.1); color: #22c55e; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
+        .info-box { background: #F9F9F7; border: 1px solid #E7E5E1; border-radius: 10px; padding: 14px; margin-bottom: 14px; text-align: left; }
+        .info-label { font-size: 0.625rem; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 8px; }
+        .info-code { flex: 1; font-size: 0.75rem; color: #444; word-break: break-all; font-family: monospace; }
+        .copy-btn { background: none; border: none; color: #888; cursor: pointer; } .copy-btn:hover { color: #C9A45F; }
 
-                /* ── Empty State ── */
-                .db-empty-state {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 48px 24px;
-                    text-align: center;
-                    border: 1px dashed var(--border);
-                    border-radius: var(--radius);
-                    background: var(--surface-2);
-                }
-                .db-empty-state p {
-                    color: var(--text-secondary);
-                    font-size: 0.875rem;
-                }
-
-                /* ── Modal ── */
-                .db-modal-backdrop {
-                    position: fixed;
-                    inset: 0;
-                    z-index: 300;
-                    background: rgba(0,0,0,0.4);
-                    backdrop-filter: blur(8px);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 24px;
-                }
-                .db-modal {
-                    background: var(--surface);
-                    border: 1px solid var(--border);
-                    border-radius: var(--radius-lg);
-                    padding: 28px;
-                    max-width: 440px;
-                    width: 100%;
-                    position: relative;
-                    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-                }
-                .db-modal-close {
-                    position: absolute;
-                    top: 14px;
-                    right: 14px;
-                    background: none;
-                    border: none;
-                    color: var(--text-muted);
-                    cursor: pointer;
-                    transition: color 0.2s;
-                }
-                .db-modal-close:hover { color: var(--text-white); }
-                .db-modal-title {
-                    font-size: 1.0625rem;
-                    font-weight: 700;
-                    color: var(--text-white);
-                    margin-bottom: 4px;
-                }
-                .db-modal-desc {
-                    color: var(--text-secondary);
-                    font-size: 0.8125rem;
-                    margin-bottom: 20px;
-                    line-height: 1.5;
-                }
-                .db-modal-success-icon {
-                    width: 48px;
-                    height: 48px;
-                    border-radius: 50%;
-                    background: rgba(109, 184, 122, 0.1);
-                    color: var(--success);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    margin: 0 auto;
-                }
-                .db-modal-info-box {
-                    background: var(--surface-2);
-                    border: 1px solid var(--border);
-                    border-radius: 12px;
-                    padding: 16px;
-                    margin-bottom: 16px;
-                    text-align: left;
-                }
-                .db-modal-info-label {
-                    font-size: 0.625rem;
-                    font-weight: 700;
-                    color: var(--text-muted);
-                    text-transform: uppercase;
-                    letter-spacing: 0.1em;
-                    display: block;
-                    margin-bottom: 8px;
-                }
-                .db-modal-code {
-                    flex: 1;
-                    font-size: 0.8125rem;
-                    color: var(--text-primary);
-                    word-break: break-all;
-                    font-family: monospace;
-                }
-                .db-modal-copy-btn {
-                    background: none;
-                    border: none;
-                    color: var(--text-muted);
-                    cursor: pointer;
-                    transition: color 0.2s;
-                }
-                .db-modal-copy-btn:hover { color: var(--accent); }
-            `}</style>
+        @media (max-width: 1100px) { .dash-grid { grid-template-columns: 1fr 1fr; } .dash-col-right { grid-column: span 2; } }
+        @media (max-width: 768px) { .dash-grid { grid-template-columns: 1fr; } .dash-col-right { grid-column: span 1; } .dash-main { padding: 24px; } }
+      `}</style>
     </div>
   );
 }
-
-function StatCard({ icon, label, value, color, bg }: { icon: React.ReactNode; label: string; value: string | number; color: string; bg: string }) {
-  return (
-    <div className="db-stat-card">
-      <div className="db-stat-icon" style={{ background: bg, color }}>
-        {icon}
-      </div>
-      <div>
-        <p className="db-stat-label">{label}</p>
-        <p className="db-stat-value">{value}</p>
-      </div>
-    </div>
-  );
-}
-
-const DEMO: Project[] = [
-  {
-    id: 'demo-1', name: 'E-Commerce Platform', description: 'Full-stack e-commerce app with payments and admin',
-    owner_id: 'demo', status: 'active', created_at: '2026-04-10T12:00:00Z',
-    modules: [
-      { id: 'm1', project_id: 'demo-1', type: 'frontend', assigned_to: 'demo', status: 'in_progress', code_path: null, updated_at: '' },
-      { id: 'm2', project_id: 'demo-1', type: 'backend', assigned_to: 'u2', status: 'standardized', code_path: null, updated_at: '', profiles: { id: 'u2', username: 'Alex', avatar_url: '' } } as any,
-      { id: 'm3', project_id: 'demo-1', type: 'authentication', assigned_to: null, status: 'unassigned', code_path: null, updated_at: '' },
-      { id: 'm4', project_id: 'demo-1', type: 'database', assigned_to: 'u3', status: 'uploaded', code_path: null, updated_at: '', profiles: { id: 'u3', username: 'Sam', avatar_url: '' } } as any,
-      { id: 'm5', project_id: 'demo-1', type: 'integrations', assigned_to: null, status: 'unassigned', code_path: null, updated_at: '' },
-    ],
-  },
-  {
-    id: 'demo-2', name: 'Social Analytics Dashboard', description: 'Real-time analytics with team collaboration features',
-    owner_id: 'demo', status: 'merged', created_at: '2026-04-08T09:00:00Z',
-    modules: ['frontend', 'backend', 'authentication', 'database', 'integrations'].map((t, i) => ({
-      id: `m${i + 6}`, project_id: 'demo-2', type: t as any, assigned_to: 'x', status: 'merged' as any, code_path: null, updated_at: '',
-    })),
-  },
-  {
-    id: 'demo-3', name: 'AI Chat App', description: 'Multi-model chatbot with streaming and memory',
-    owner_id: 'demo', status: 'error', created_at: '2026-04-06T15:00:00Z',
-    modules: [
-      { id: 'm11', project_id: 'demo-3', type: 'frontend', assigned_to: 'demo', status: 'standardized', code_path: null, updated_at: '' },
-      { id: 'm12', project_id: 'demo-3', type: 'backend', assigned_to: 'u7', status: 'error', code_path: null, updated_at: '', profiles: { id: 'u7', username: 'Jordan', avatar_url: '' } } as any,
-      { id: 'm13', project_id: 'demo-3', type: 'authentication', assigned_to: null, status: 'unassigned', code_path: null, updated_at: '' },
-      { id: 'm14', project_id: 'demo-3', type: 'database', assigned_to: 'u8', status: 'standardized', code_path: null, updated_at: '', profiles: { id: 'u8', username: 'Riley', avatar_url: '' } } as any,
-      { id: 'm15', project_id: 'demo-3', type: 'integrations', assigned_to: 'demo', status: 'in_progress', code_path: null, updated_at: '' },
-    ],
-  },
-];

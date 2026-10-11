@@ -514,6 +514,7 @@ export default function HomePage() {
           top: 50%;
           right: -25vw;
           width: 44vw;
+          
           height: 68vh;
           transform: translateY(-50%);
           border-left: 1px solid rgba(0,0,0,0.12);
