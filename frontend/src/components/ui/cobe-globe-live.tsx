@@ -81,14 +81,14 @@ export function GlobeLive({
       if (width === 0 || globe) return
 
       globe = createGlobe(canvas, {
-        devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
+        devicePixelRatio: 1,
         width,
         height: width,
         phi: 0,
         theta: 0.2,
         dark: 1,
         diffuse: 1.5,
-        mapSamples: 16000,
+        mapSamples: 5000,
         mapBrightness: 6,
         baseColor: [0.3, 0.3, 0.3],
         markerColor: [0.79, 0.66, 0.43],

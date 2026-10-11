@@ -290,7 +290,7 @@ export default function LoginPage() {
           position: absolute;
           top: -45vw;
           left: 50%;
-          transform: translateX(-50%);
+          transform: translate3d(-50%, 0, 0);
           width: 85vw;
           height: 65vw;
           background: #ffffff;
@@ -298,6 +298,7 @@ export default function LoginPage() {
           z-index: 1;
           pointer-events: none;
           box-shadow: 0 0 60px rgba(209, 176, 111, 0.35), 0 0 120px rgba(209, 176, 111, 0.15);
+          will-change: transform;
         }
 
         @media (max-width: 768px) {
