@@ -20,7 +20,6 @@ export default function DashboardNavbar() {
       <div className="dash-nav-left">
         <Link href="/" className="nav-back-home" title="Back to Home">
           <ArrowLeft size={14} />
-          <span>Home</span>
         </Link>
         <div className="dash-left-divider"></div>
         <Link href="/dashboard" className="dash-logo">

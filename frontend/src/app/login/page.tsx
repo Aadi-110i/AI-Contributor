@@ -77,7 +77,6 @@ export default function LoginPage() {
       {/* Floating Back to Home */}
       <Link href="/" className="auth-back-btn">
         <ArrowLeft size={15} />
-        <span>Home</span>
       </Link>
 
       {/* Background White Glow */}
