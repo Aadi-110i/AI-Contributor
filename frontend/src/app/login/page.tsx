@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 
@@ -156,7 +156,7 @@ export default function LoginPage() {
                 <div className="input-group">
                   <label>Username</label>
                   <div className="input-wrapper">
-                    <Mail className="input-icon" size={16} />
+                    <User className="input-icon" size={16} />
                     <input
                       type="text"
                       placeholder="you"
@@ -467,8 +467,10 @@ export default function LoginPage() {
 
         .input-icon {
           position: absolute;
-          left: 14px;
+          left: 15px;
           color: rgba(255,255,255,0.4);
+          pointer-events: none;
+          z-index: 2;
         }
 
         .input-wrapper input {
@@ -476,7 +478,7 @@ export default function LoginPage() {
           background: rgba(0, 0, 0, 0.3);
           border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 8px;
-          padding: 12px 14px 12px 40px;
+          padding: 12px 14px 12px 46px;
           font-size: 0.875rem;
           color: white;
           outline: none;
