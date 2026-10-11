@@ -30,7 +30,7 @@ export default function NeuralBackground({
   className,
   color = "#6366f1", // Default Indigo
   trailOpacity = 0.15,
-  particleCount = 400,
+  particleCount = 150,
   speed = 1,
 }: NeuralBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -163,11 +163,19 @@ export default function NeuralBackground({
     };
 
     // --- ANIMATION LOOP ---
-    const animate = () => {
+    let isVisible = true;
+    let lastFrameTime = 0;
+    const FRAME_INTERVAL = 1000 / 30; // 30fps cap
+
+    const animate = (timestamp: number) => {
+      animationFrameId = requestAnimationFrame(animate);
+      if (!isVisible) return;
+      const elapsed = timestamp - lastFrameTime;
+      if (elapsed < FRAME_INTERVAL) return;
+      lastFrameTime = timestamp - (elapsed % FRAME_INTERVAL);
+
       // "Fade" effect: Instead of clearing the canvas, we draw a semi-transparent rect
       // This creates the "Trails" look.
-      // We use the background color of the parent or a dark overlay.
-      // Assuming dark mode for this effect usually:
       ctx.fillStyle = `rgba(9, 9, 11, ${trailOpacity})`; 
       ctx.fillRect(0, 0, width, height);
 
@@ -175,9 +183,18 @@ export default function NeuralBackground({
         p.update();
         p.draw(ctx);
       });
-
-      animationFrameId = requestAnimationFrame(animate);
     };
+
+    // Pause when tab is hidden
+    const handleVisibility = () => { isVisible = !document.hidden; };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    // Pause when element is off-screen
+    const observer = new IntersectionObserver(
+      ([entry]) => { isVisible = entry.isIntersecting && !document.hidden; },
+      { threshold: 0 }
+    );
+    observer.observe(container);
 
     // --- EVENT LISTENERS ---
     const handleResize = () => {
@@ -199,7 +216,7 @@ export default function NeuralBackground({
 
     // Start
     init();
-    animate();
+    animate(0);
 
     window.addEventListener("resize", handleResize);
     container.addEventListener("mousemove", handleMouseMove);
@@ -209,6 +226,8 @@ export default function NeuralBackground({
       window.removeEventListener("resize", handleResize);
       container.removeEventListener("mousemove", handleMouseMove);
       container.removeEventListener("mouseleave", handleMouseLeave);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      observer.disconnect();
       cancelAnimationFrame(animationFrameId);
     };
   }, [color, trailOpacity, particleCount, speed]);
