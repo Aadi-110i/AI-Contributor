@@ -6,72 +6,9 @@ import Link from 'next/link';
 import DashboardNavbar from '@/components/DashboardNavbar';
 import { api, type Project } from '@/lib/api';
 import { 
-  FolderOpen, Plus, Search, Filter, ArrowUpRight, GitBranch, 
-  Clock, CheckCircle2, AlertCircle, Layers, Users, Sparkles, X, Check, Copy, Link as LinkIcon
+  FolderOpen, Plus, Search, ArrowUpRight, 
+  Clock, CheckCircle2, AlertCircle, Layers, Users, X, Check, Copy, Link as LinkIcon
 } from 'lucide-react';
-
-const DEMO_PROJECTS: Project[] = [
-  {
-    id: 'demo-1',
-    name: 'NovaChat',
-    description: 'AI-powered real-time collaborative workspace with streaming agent copilot.',
-    owner_id: 'demo',
-    status: 'active',
-    created_at: '2026-04-10T12:00:00Z',
-    modules: ['frontend', 'backend', 'authentication', 'database', 'integrations'].map((t, i) => ({
-      id: `m${i}`, project_id: 'demo-1', type: t as any, assigned_to: i < 3 ? 'Aadarsh' : null, 
-      status: i === 0 ? 'standardized' : i === 1 ? 'in_progress' : 'unassigned' as any, code_path: null, updated_at: '',
-    })),
-  },
-  {
-    id: 'demo-2',
-    name: 'PixelForge Studio',
-    description: 'Generative image studio pipeline using ComfyUI microservices and Canvas UI.',
-    owner_id: 'demo',
-    status: 'active',
-    created_at: '2026-04-08T09:00:00Z',
-    modules: ['frontend', 'backend', 'authentication', 'database', 'integrations'].map((t, i) => ({
-      id: `m${i + 5}`, project_id: 'demo-2', type: t as any, assigned_to: 'Aadarsh', 
-      status: 'standardized' as any, code_path: null, updated_at: '',
-    })),
-  },
-  {
-    id: 'demo-3',
-    name: 'DocuMind Intelligence',
-    description: 'Automated retrieval-augmented semantic document parsing with vector caching.',
-    owner_id: 'demo',
-    status: 'active',
-    created_at: '2026-04-06T15:00:00Z',
-    modules: ['frontend', 'backend'].map((t, i) => ({
-      id: `m${i + 10}`, project_id: 'demo-3', type: t as any, assigned_to: 'Alex', 
-      status: 'merged' as any, code_path: null, updated_at: '',
-    })),
-  },
-  {
-    id: 'demo-4',
-    name: 'FlowOps Orchestrator',
-    description: 'Fault-tolerant distributed webhook orchestrator & event bus.',
-    owner_id: 'demo',
-    status: 'error',
-    created_at: '2026-04-01T10:00:00Z',
-    modules: ['frontend', 'backend'].map((t, i) => ({
-      id: `m${i + 12}`, project_id: 'demo-4', type: t as any, assigned_to: null, 
-      status: 'unassigned' as any, code_path: null, updated_at: '',
-    })),
-  },
-  {
-    id: 'demo-5',
-    name: 'Synthetix Audio API',
-    description: 'High-throughput low latency neural speech generation streaming bridge.',
-    owner_id: 'demo',
-    status: 'active',
-    created_at: '2026-03-28T18:30:00Z',
-    modules: ['backend', 'integrations'].map((t, i) => ({
-      id: `m${i + 15}`, project_id: 'demo-5', type: t as any, assigned_to: 'Sarah K.', 
-      status: 'standardized' as any, code_path: null, updated_at: '',
-    })),
-  },
-];
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -96,9 +33,9 @@ export default function ProjectsPage() {
     try {
       const data = await api.projects.list();
       const combined = [...(data.owned || []), ...(data.participating || [])];
-      setProjects(combined.length ? combined : DEMO_PROJECTS);
+      setProjects(combined);
     } catch {
-      setProjects(DEMO_PROJECTS);
+      setProjects([]);
     } finally {
       setLoading(false);
     }
@@ -111,28 +48,9 @@ export default function ProjectsPage() {
     try {
       const p = await api.projects.create({ name, description: desc });
       setCreatedProject(p);
-      // Reload projects from backend to get fresh list
       await loadProjects();
-    } catch {
-      const demo: Project = {
-        id: `demo-${Date.now()}`,
-        name,
-        description: desc || 'Architected module pipeline',
-        owner_id: 'demo',
-        status: 'active',
-        created_at: new Date().toISOString(),
-        modules: ['frontend', 'backend', 'authentication', 'database', 'integrations'].map((t, i) => ({
-          id: `m-${Date.now()}-${i}`,
-          project_id: '',
-          type: t as any,
-          assigned_to: null,
-          status: 'unassigned' as any,
-          code_path: null,
-          updated_at: '',
-        })),
-      };
-      setProjects((prev) => [demo, ...prev]);
-      setCreatedProject(demo);
+    } catch (err: any) {
+      alert(err.message || 'Failed to create project');
     } finally {
       setCreating(false);
     }
@@ -144,7 +62,7 @@ export default function ProjectsPage() {
       const { link } = await api.invites.create(createdProject.id);
       setInviteLink(link);
     } catch {
-      setInviteLink(`${window.location.origin}/invite/demo-${Date.now()}`);
+      setInviteLink(`${window.location.origin}/invite/inv_${Date.now()}`);
     }
   };
 
@@ -166,7 +84,7 @@ export default function ProjectsPage() {
       <DashboardNavbar />
 
       <main className="projects-main">
-        {/* Header section with refined typography and gold warm accenting */}
+        {/* Header section */}
         <header className="page-header">
           <div className="header-meta">
             <span className="section-tag">
@@ -175,7 +93,7 @@ export default function ProjectsPage() {
             </span>
             <h1 className="page-title">Project Directory</h1>
             <p className="page-desc">
-              Manage your high-velocity engineering projects, modular AI pipelines, and collaborative codebases.
+              Manage your engineering projects, modular AI pipelines, and collaborative codebases.
             </p>
           </div>
 
@@ -193,7 +111,7 @@ export default function ProjectsPage() {
             <Search size={16} className="search-icon" />
             <input 
               type="text" 
-              placeholder="Search by project name, description or module..." 
+              placeholder="Search by project name or description..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="search-input"
@@ -227,10 +145,10 @@ export default function ProjectsPage() {
         ) : filteredProjects.length === 0 ? (
           <div className="empty-state">
             <FolderOpen size={48} className="empty-icon" />
-            <h3>No projects found</h3>
-            <p>Try adjusting your query or create a fresh workspace.</p>
-            <button className="secondary-btn" onClick={() => setShowCreate(true)}>
-              <Plus size={14} /> New Project
+            <h3>No projects yet</h3>
+            <p>Create your first project to start architecting and assembling AI modules.</p>
+            <button className="primary-btn" style={{ marginTop: '16px' }} onClick={() => setShowCreate(true)}>
+              <Plus size={14} /> Create First Project
             </button>
           </div>
         ) : (
@@ -261,7 +179,7 @@ export default function ProjectsPage() {
                           </>
                         )}
                       </span>
-                      <span className="tech-badge">Next.js 14 + Node</span>
+                      <span className="tech-badge">Next.js + Node</span>
                     </div>
 
                     <Link href={`/project/${project.id}`} className="open-link" title="Open Workspace">
@@ -298,7 +216,7 @@ export default function ProjectsPage() {
                     </div>
                     <div className="footer-stat">
                       <Users size={13} />
-                      <span>3 devs</span>
+                      <span>{project.modules?.filter(m => m.assigned_to).length || 0} assigned</span>
                     </div>
                     <div className="footer-stat date">
                       <Clock size={13} />
@@ -799,54 +717,57 @@ export default function ProjectsPage() {
           border: 1px solid #E7E5E1;
           border-radius: 20px;
           padding: 32px;
-          max-width: 480px;
+          max-width: 440px;
           width: 100%;
           position: relative;
-          box-shadow: 0 24px 60px rgba(0, 0, 0, 0.15);
+          box-shadow: 0 24px 60px rgba(0,0,0,0.12);
         }
 
         .modal-close {
           position: absolute;
-          top: 18px;
-          right: 18px;
+          top: 16px;
+          right: 16px;
           background: none;
           border: none;
-          color: #999;
+          color: #888;
           cursor: pointer;
         }
 
-        .modal-close:hover { color: #111; }
+        .modal-close:hover {
+          color: #111;
+        }
 
         .modal-tag {
-          font-size: 0.625rem;
+          font-size: 0.6875rem;
           font-weight: 700;
           color: #C9A45F;
-          letter-spacing: 0.12em;
-          margin-bottom: 8px;
+          letter-spacing: 0.1em;
+          margin-bottom: 6px;
         }
 
         .modal-title {
-          font-size: 1.35rem;
-          font-weight: 800;
+          font-size: 1.25rem;
+          font-weight: 700;
           color: #111;
           margin: 0 0 6px 0;
-          letter-spacing: -0.02em;
         }
 
         .modal-desc {
           color: #666;
-          font-size: 0.84375rem;
+          font-size: 0.8125rem;
           margin: 0 0 24px 0;
           line-height: 1.5;
         }
 
-        .modal-field { margin-bottom: 16px; }
+        .modal-field {
+          margin-bottom: 16px;
+        }
 
         .modal-label {
           display: block;
           font-size: 0.75rem;
           font-weight: 600;
-          color: #555;
+          color: #666;
           text-transform: uppercase;
           letter-spacing: 0.05em;
           margin-bottom: 8px;
@@ -861,23 +782,23 @@ export default function ProjectsPage() {
         .modal-input {
           width: 100%;
           box-sizing: border-box;
-          padding: 12px 14px;
-          border: 1px solid #E2DED6;
-          border-radius: 10px;
+          padding: 10px 14px;
+          border: 1px solid #E7E5E1;
+          border-radius: 8px;
           font-size: 0.875rem;
           font-family: inherit;
           color: #111;
           outline: none;
-          background: #FAF8F5;
+          transition: border-color 0.2s;
         }
 
         .modal-input:focus {
           border-color: #C9A45F;
-          background: #fff;
         }
 
         .modal-textarea {
           resize: vertical;
+          min-height: 70px;
         }
 
         .modal-actions {
@@ -888,42 +809,53 @@ export default function ProjectsPage() {
 
         .btn-cancel {
           flex: 1;
-          padding: 11px;
-          border: 1px solid #E2DED6;
+          padding: 10px;
+          border: 1px solid #E7E5E1;
           background: transparent;
-          border-radius: 10px;
+          border-radius: 8px;
           font-size: 0.875rem;
-          font-weight: 600;
-          color: #666;
+          font-family: inherit;
           cursor: pointer;
+          color: #666;
+          transition: background 0.2s;
         }
 
-        .btn-cancel:hover { background: #F5F3EF; }
+        .btn-cancel:hover {
+          background: #f5f5f5;
+        }
 
         .btn-create {
           flex: 1;
-          padding: 11px;
+          padding: 10px;
           background: #111;
           color: #fff;
           border: none;
-          border-radius: 10px;
+          border-radius: 8px;
           font-size: 0.875rem;
-          font-weight: 600;
+          font-family: inherit;
           cursor: pointer;
+          font-weight: 600;
           display: flex;
           align-items: center;
           justify-content: center;
+          transition: background 0.2s;
         }
 
-        .btn-create:hover { background: #000; }
-        .btn-create:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-create:hover {
+          background: #000;
+        }
+
+        .btn-create:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
 
         .success-icon {
-          width: 52px;
-          height: 52px;
+          width: 48px;
+          height: 48px;
           border-radius: 50%;
-          background: rgba(34, 197, 94, 0.12);
-          color: #16a34a;
+          background: rgba(34,197,94,0.1);
+          color: #22c55e;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -931,35 +863,28 @@ export default function ProjectsPage() {
         }
 
         .info-box {
-          background: #FAF9F6;
-          border: 1px solid #EAE6DF;
-          border-radius: 12px;
+          background: #F9F9F7;
+          border: 1px solid #E7E5E1;
+          border-radius: 10px;
           padding: 14px;
           margin-bottom: 14px;
           text-align: left;
         }
 
-        .info-box.invite {
-          border-color: rgba(201, 164, 95, 0.3);
-          background: rgba(201, 164, 95, 0.05);
-        }
-
         .info-label {
           font-size: 0.625rem;
           font-weight: 700;
-          color: #999;
+          color: #aaa;
           text-transform: uppercase;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.1em;
           display: block;
-          margin-bottom: 6px;
+          margin-bottom: 8px;
         }
-
-        .invite-label { color: #A37F38; }
 
         .info-code {
           flex: 1;
-          font-size: 0.78125rem;
-          color: #333;
+          font-size: 0.75rem;
+          color: #444;
           word-break: break-all;
           font-family: monospace;
         }
@@ -969,15 +894,10 @@ export default function ProjectsPage() {
           border: none;
           color: #888;
           cursor: pointer;
-          padding: 4px;
         }
 
-        .copy-btn:hover { color: #C9A45F; }
-
-        @media (max-width: 768px) {
-          .projects-main { padding: 24px 20px; }
-          .page-title { font-size: 2rem; }
-          .projects-grid { grid-template-columns: 1fr; }
+        .copy-btn:hover {
+          color: #C9A45F;
         }
       `}</style>
     </div>

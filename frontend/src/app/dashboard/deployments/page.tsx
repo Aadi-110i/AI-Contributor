@@ -1,225 +1,109 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import DashboardNavbar from '@/components/DashboardNavbar';
+import { api } from '@/lib/api';
 import { 
-  Rocket, Globe, ExternalLink, Play, CheckCircle2, AlertCircle, 
-  Terminal, Server, RefreshCw, GitBranch, ShieldCheck, Cpu, ArrowUpRight
+  Rocket, CheckCircle2, Clock, Terminal, GitBranch, ArrowUpRight
 } from 'lucide-react';
 
-interface DeploymentItem {
-  id: string;
-  project: string;
-  environment: 'Production' | 'Staging' | 'Preview';
-  url: string;
-  status: 'Ready' | 'Building' | 'Failed';
-  commit: string;
-  branch: string;
-  deployedAt: string;
-  duration: string;
-}
-
-const SAMPLE_DEPLOYMENTS: DeploymentItem[] = [
-  {
-    id: 'd-1092',
-    project: 'NovaChat AI',
-    environment: 'Production',
-    url: 'https://novachat.wiibuild.app',
-    status: 'Ready',
-    commit: 'fdd97b5',
-    branch: 'main',
-    deployedAt: '14m ago',
-    duration: '28s',
-  },
-  {
-    id: 'd-1091',
-    project: 'NovaChat AI',
-    environment: 'Preview',
-    url: 'https://preview-novachat-34.wiibuild.app',
-    status: 'Ready',
-    commit: 'a12e804',
-    branch: 'feat/audio-orbit',
-    deployedAt: '1h ago',
-    duration: '22s',
-  },
-  {
-    id: 'd-1090',
-    project: 'PixelForge Studio',
-    environment: 'Production',
-    url: 'https://pixelforge.wiibuild.app',
-    status: 'Ready',
-    commit: 'c8812bf',
-    branch: 'main',
-    deployedAt: '4h ago',
-    duration: '45s',
-  },
-  {
-    id: 'd-1089',
-    project: 'DocuMind Intelligence',
-    environment: 'Staging',
-    url: 'https://staging-documind.wiibuild.app',
-    status: 'Ready',
-    commit: '7b419fa',
-    branch: 'staging',
-    deployedAt: '1d ago',
-    duration: '31s',
-  },
-  {
-    id: 'd-1088',
-    project: 'FlowOps Orchestrator',
-    environment: 'Preview',
-    url: 'https://flowops-test.wiibuild.app',
-    status: 'Failed',
-    commit: '09aef81',
-    branch: 'fix/webhook-retry',
-    deployedAt: '2d ago',
-    duration: '14s',
-  },
-];
-
 export default function DeploymentsPage() {
-  const [deployments, setDeployments] = useState<DeploymentItem[]>(SAMPLE_DEPLOYMENTS);
-  const [deploying, setDeploying] = useState(false);
-  const [selectedEnv, setSelectedEnv] = useState<'All' | 'Production' | 'Staging' | 'Preview'>('All');
+  const [deployments, setDeployments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const triggerDeploy = () => {
-    setDeploying(true);
-    setTimeout(() => {
-      const newDeploy: DeploymentItem = {
-        id: `d-${Date.now().toString().slice(-4)}`,
-        project: 'NovaChat AI',
-        environment: 'Production',
-        url: 'https://novachat.wiibuild.app',
-        status: 'Ready',
-        commit: 'e992a10',
-        branch: 'main',
-        deployedAt: 'Just now',
-        duration: '24s',
-      };
-      setDeployments([newDeploy, ...deployments]);
-      setDeploying(false);
-    }, 2000);
+  useEffect(() => {
+    loadDeployments();
+  }, []);
+
+  const loadDeployments = async () => {
+    try {
+      // Get real projects and their real merge logs
+      const projData = await api.projects.list();
+      const allProjects = [...(projData.owned || []), ...(projData.participating || [])];
+
+      const allLogs: any[] = [];
+      for (const p of allProjects) {
+        try {
+          const logs = await api.merge.logs(p.id);
+          logs.forEach((log) => {
+            allLogs.push({
+              id: log.id,
+              projectName: p.name,
+              projectId: p.id,
+              status: log.status,
+              logOutput: log.log_output,
+              createdAt: log.created_at,
+            });
+          });
+        } catch {}
+      }
+      setDeployments(allLogs);
+    } catch {
+      setDeployments([]);
+    } finally {
+      setLoading(false);
+    }
   };
-
-  const filtered = deployments.filter(d => selectedEnv === 'All' || d.environment === selectedEnv);
 
   return (
     <div className="deploy-layout">
       <DashboardNavbar />
 
       <main className="deploy-main">
-        {/* Header */}
         <header className="page-header">
-          <div>
-            <div className="section-tag">
-              <span className="pulse-indicator"></span>
-              EDGE GLOBAL CLUSTERS
-            </div>
-            <h1 className="page-title">Deployments & Hosting</h1>
-            <p className="page-desc">
-              Zero-config automated edge deployments with automated SSL, serverless function bindings, and instant rollbacks.
-            </p>
+          <div className="section-tag">
+            <span className="pulse-indicator"></span>
+            CI/CD PIPELINE & RELEASES
           </div>
-
-          <button 
-            className="primary-btn" 
-            onClick={triggerDeploy}
-            disabled={deploying}
-          >
-            {deploying ? <RefreshCw size={15} className="spin-icon" /> : <Rocket size={15} />}
-            <span>{deploying ? 'Deploying to Edge...' : 'Deploy Latest Build'}</span>
-          </button>
+          <h1 className="page-title">Deployments & Merge Logs</h1>
+          <p className="page-desc">
+            Monitor verified integration logs, automated AST build outputs, and module merges.
+          </p>
         </header>
 
-        {/* Global Edge Network Status Banner */}
-        <div className="edge-banner">
-          <div className="edge-left">
-            <div className="edge-title-row">
-              <Server size={18} className="gold-icon" />
-              <h3>Global Edge Mesh: Online</h3>
-            </div>
-            <p className="edge-desc">
-              Your applications are replicated across 42 regions worldwide with Anycast DNS routing and instant edge SSR caching.
-            </p>
+        {loading ? (
+          <div className="state-box">
+            <div className="spinner"></div>
+            <p>Scanning build telemetry...</p>
           </div>
-
-          <div className="edge-stats">
-            <div className="edge-stat-box">
-              <span className="stat-label">Fastest Edge TTL</span>
-              <span className="stat-value">18ms</span>
-            </div>
-            <div className="edge-stat-box">
-              <span className="stat-label">SSL Encryption</span>
-              <span className="stat-value">TLS 1.3 Active</span>
-            </div>
-            <div className="edge-stat-box">
-              <span className="stat-label">Uptime</span>
-              <span className="stat-value">100%</span>
-            </div>
+        ) : deployments.length === 0 ? (
+          <div className="state-box">
+            <Rocket size={44} style={{ color: '#C9A45F', margin: '0 auto 12px' }} />
+            <h3>No deployments yet</h3>
+            <p>Merge a project in your workspace to trigger automated testing and log deployment history.</p>
+            <Link href="/dashboard/projects" className="primary-btn" style={{ display: 'inline-flex', marginTop: '16px', textDecoration: 'none' }}>
+              View Projects →
+            </Link>
           </div>
-        </div>
+        ) : (
+          <div className="deploy-list">
+            {deployments.map((d) => (
+              <div key={d.id} className="deploy-card">
+                <div className="card-top">
+                  <div>
+                    <h3 className="proj-title">{d.projectName}</h3>
+                    <div className="meta-row">
+                      <span className={`status-tag ${d.status === 'success' ? 'status-ok' : 'status-err'}`}>
+                        <CheckCircle2 size={12} /> {d.status}
+                      </span>
+                      <span className="time-str">
+                        <Clock size={12} /> {new Date(d.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                  <Link href={`/project/${d.projectId}`} className="primary-btn" style={{ textDecoration: 'none', fontSize: '0.8125rem' }}>
+                    Open Workspace <ArrowUpRight size={13} />
+                  </Link>
+                </div>
 
-        {/* Filter Pills */}
-        <div className="filter-row">
-          <div className="env-pills">
-            {(['All', 'Production', 'Staging', 'Preview'] as const).map((env) => (
-              <button 
-                key={env} 
-                onClick={() => setSelectedEnv(env)}
-                className={`env-pill ${selectedEnv === env ? 'active' : ''}`}
-              >
-                {env}
-              </button>
+                <pre className="log-snippet">
+                  {d.logOutput}
+                </pre>
+              </div>
             ))}
           </div>
-        </div>
-
-        {/* Deployment List */}
-        <div className="deployments-list">
-          {filtered.map((item) => (
-            <div key={item.id} className="deploy-item">
-              <div className="deploy-meta">
-                <div className="deploy-title-line">
-                  <h3 className="project-heading">{item.project}</h3>
-                  <span className={`env-tag env-${item.environment.toLowerCase()}`}>
-                    {item.environment}
-                  </span>
-                  <span className={`status-badge status-${item.status.toLowerCase()}`}>
-                    {item.status === 'Ready' && <CheckCircle2 size={13} />}
-                    {item.status === 'Failed' && <AlertCircle size={13} />}
-                    {item.status}
-                  </span>
-                </div>
-
-                <a href={item.url} target="_blank" rel="noreferrer" className="deploy-url">
-                  <span>{item.url}</span>
-                  <ExternalLink size={13} />
-                </a>
-
-                <div className="deploy-commit-details">
-                  <div className="detail-item">
-                    <GitBranch size={13} />
-                    <span>{item.branch}</span>
-                  </div>
-                  <div className="detail-item commit-code">
-                    <span>{item.commit}</span>
-                  </div>
-                  <span className="bullet-dot">•</span>
-                  <span>{item.deployedAt}</span>
-                  <span className="bullet-dot">•</span>
-                  <span>Built in {item.duration}</span>
-                </div>
-              </div>
-
-              <div className="deploy-actions">
-                <a href={item.url} target="_blank" rel="noreferrer" className="visit-btn">
-                  <span>Visit Domain</span>
-                  <ArrowUpRight size={14} />
-                </a>
-              </div>
-            </div>
-          ))}
-        </div>
+        )}
       </main>
 
       <style jsx global>{`
@@ -227,28 +111,19 @@ export default function DeploymentsPage() {
           min-height: 100vh;
           background: #FAFAF8;
           color: #111;
-          display: flex;
-          flex-direction: column;
           font-family: 'Inter', sans-serif;
         }
 
         .deploy-main {
-          flex: 1;
-          width: 100%;
           max-width: 1400px;
           margin: 0 auto;
           padding: 40px 48px 80px;
-          box-sizing: border-box;
         }
 
         .page-header {
-          display: flex;
-          align-items: flex-end;
-          justify-content: space-between;
-          padding-bottom: 32px;
+          padding-bottom: 28px;
           border-bottom: 1px solid #EBE8E2;
-          gap: 24px;
-          flex-wrap: wrap;
+          margin-bottom: 32px;
         }
 
         .section-tag {
@@ -267,278 +142,116 @@ export default function DeploymentsPage() {
           height: 6px;
           border-radius: 50%;
           background: #C9A45F;
-          box-shadow: 0 0 10px rgba(201, 164, 95, 0.6);
         }
 
         .page-title {
-          font-size: 2.5rem;
+          font-size: 2.25rem;
           font-weight: 800;
           letter-spacing: -0.03em;
-          color: #111;
-          margin: 0 0 8px 0;
-          line-height: 1.1;
+          margin: 0 0 8px;
         }
 
         .page-desc {
-          font-size: 0.9375rem;
           color: #666;
+          font-size: 0.9375rem;
           margin: 0;
-          max-width: 600px;
-          line-height: 1.5;
         }
 
-        .primary-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          background: #111;
-          color: #fff;
-          border: none;
-          padding: 12px 22px;
-          border-radius: 10px;
-          font-size: 0.875rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .primary-btn:hover { background: #222; transform: translateY(-1px); }
-        .primary-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-        /* Edge Banner */
-        .edge-banner {
-          margin: 32px 0;
-          background: linear-gradient(135deg, #12110F, #1E1B17);
-          border: 1px solid #363127;
-          border-radius: 16px;
-          padding: 24px 28px;
-          color: #fff;
+        .deploy-list {
           display: flex;
-          align-items: center;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .deploy-card {
+          background: #fff;
+          border: 1px solid #EBE8E2;
+          border-radius: 14px;
+          padding: 24px;
+        }
+
+        .card-top {
+          display: flex;
           justify-content: space-between;
-          gap: 24px;
-          flex-wrap: wrap;
+          align-items: flex-start;
+          margin-bottom: 16px;
+          gap: 12px;
         }
 
-        .edge-title-row {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin-bottom: 6px;
-        }
-
-        .edge-title-row h3 {
+        .proj-title {
           font-size: 1.125rem;
           font-weight: 700;
-          margin: 0;
-          color: #FAF8F5;
+          margin: 0 0 6px;
         }
 
-        .gold-icon { color: #C9A45F; }
-
-        .edge-desc {
-          font-size: 0.8125rem;
-          color: #A8A195;
-          margin: 0;
-          max-width: 580px;
-          line-height: 1.5;
-        }
-
-        .edge-stats {
-          display: flex;
-          gap: 20px;
-        }
-
-        .edge-stat-box {
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 10px;
-          padding: 10px 16px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        }
-
-        .stat-label {
-          font-size: 0.6875rem;
-          color: #8E887D;
-          margin-bottom: 2px;
-        }
-
-        .stat-value {
-          font-size: 0.875rem;
-          font-weight: 700;
-          color: #C9A45F;
-        }
-
-        /* Filter Row */
-        .filter-row {
-          margin-bottom: 20px;
-        }
-
-        .env-pills {
-          display: flex;
-          gap: 8px;
-        }
-
-        .env-pill {
-          background: #EFECE6;
-          border: none;
-          padding: 7px 16px;
-          border-radius: 20px;
-          font-size: 0.8125rem;
-          font-weight: 600;
-          color: #666;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .env-pill.active {
-          background: #111;
-          color: #fff;
-        }
-
-        /* Deployments List */
-        .deployments-list {
-          display: flex;
-          flex-direction: column;
-          gap: 14px;
-        }
-
-        .deploy-item {
-          background: #FFFFFF;
-          border: 1px solid #EBE8E2;
-          border-radius: 16px;
-          padding: 22px 26px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 20px;
-          transition: all 0.2s;
-        }
-
-        .deploy-item:hover {
-          border-color: #D6D0C4;
-          transform: translateY(-2px);
-          box-shadow: 0 10px 24px rgba(0,0,0,0.04);
-        }
-
-        .deploy-meta {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-        }
-
-        .deploy-title-line {
+        .meta-row {
           display: flex;
           align-items: center;
           gap: 12px;
-          flex-wrap: wrap;
-        }
-
-        .project-heading {
-          font-size: 1.125rem;
-          font-weight: 700;
-          color: #111;
-          margin: 0;
-        }
-
-        .env-tag {
-          font-size: 0.6875rem;
-          font-weight: 700;
-          padding: 3px 8px;
-          border-radius: 6px;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-        }
-
-        .env-production { background: rgba(201, 164, 95, 0.15); color: #A37F38; }
-        .env-staging { background: rgba(59, 130, 246, 0.1); color: #2563eb; }
-        .env-preview { background: #F2EFE9; color: #666; }
-
-        .status-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          padding: 3px 8px;
-          border-radius: 20px;
-        }
-
-        .status-ready { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
-        .status-failed { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
-
-        .deploy-url {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          color: #555;
-          text-decoration: none;
-          font-size: 0.84375rem;
-          font-family: monospace;
-          transition: color 0.2s;
-        }
-
-        .deploy-url:hover { color: #C9A45F; }
-
-        .deploy-commit-details {
-          display: flex;
-          align-items: center;
-          gap: 8px;
           font-size: 0.75rem;
           color: #888;
         }
 
-        .detail-item {
-          display: flex;
+        .status-tag {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          font-weight: 600;
+          padding: 3px 8px;
+          border-radius: 12px;
+        }
+
+        .status-ok { background: rgba(34,197,94,0.12); color: #16a34a; }
+        .status-err { background: rgba(239,68,68,0.12); color: #dc2626; }
+
+        .time-str {
+          display: inline-flex;
           align-items: center;
           gap: 4px;
         }
 
-        .commit-code {
+        .log-snippet {
+          background: #111;
+          color: #A3E635;
+          padding: 16px;
+          border-radius: 8px;
           font-family: monospace;
-          background: #F5F3EF;
-          padding: 2px 6px;
-          border-radius: 4px;
-          color: #555;
+          font-size: 0.75rem;
+          overflow-x: auto;
+          margin: 0;
+          line-height: 1.5;
         }
 
-        .bullet-dot { color: #ccc; }
+        .state-box {
+          text-align: center;
+          padding: 80px 20px;
+          color: #888;
+        }
 
-        .visit-btn {
+        .spinner {
+          width: 32px;
+          height: 32px;
+          border: 3px solid rgba(201,164,95,0.2);
+          border-top-color: #C9A45F;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+          margin: 0 auto 12px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .primary-btn {
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          padding: 10px 18px;
-          background: #FAF8F5;
-          border: 1px solid #E2DED6;
-          border-radius: 10px;
-          font-size: 0.8125rem;
-          font-weight: 600;
-          color: #111;
-          text-decoration: none;
-          transition: all 0.2s;
-        }
-
-        .visit-btn:hover {
           background: #111;
           color: #fff;
-          border-color: #111;
-        }
-
-        .spin-icon {
-          animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-
-        @media (max-width: 768px) {
-          .deploy-item { flex-direction: column; align-items: flex-start; }
-          .visit-btn { width: 100%; justify-content: center; }
-          .edge-stats { flex-wrap: wrap; }
+          border: none;
+          padding: 8px 14px;
+          border-radius: 8px;
+          font-size: 0.875rem;
+          font-weight: 600;
+          cursor: pointer;
         }
       `}</style>
     </div>

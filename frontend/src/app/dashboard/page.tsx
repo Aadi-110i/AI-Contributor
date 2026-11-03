@@ -7,7 +7,7 @@ import DashboardNavbar from '@/components/DashboardNavbar';
 import IdeasOrbit from '@/components/dashboard/IdeasOrbit';
 import RightColumn from '@/components/dashboard/RightColumn';
 import RecentProjects from '@/components/dashboard/RecentProjects';
-import { Plus, X, Check, Copy, Link as LinkIcon } from 'lucide-react';
+import { Plus, X, Check, Copy, Link as LinkIcon, FolderOpen } from 'lucide-react';
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -15,37 +15,6 @@ function getGreeting(): string {
   if (hour < 17) return 'Good afternoon';
   return 'Good evening';
 }
-
-const DEMO: Project[] = [
-  {
-    id: 'demo-1', name: 'NovaChat', description: 'AI-powered chat platform',
-    owner_id: 'demo', status: 'active', created_at: '2026-04-10T12:00:00Z',
-    modules: ['frontend', 'backend', 'authentication', 'database', 'integrations'].map((t, i) => ({
-      id: `m${i}`, project_id: 'demo-1', type: t as any, assigned_to: null, status: 'in_progress' as any, code_path: null, updated_at: '',
-    })),
-  },
-  {
-    id: 'demo-2', name: 'PixelForge', description: 'AI image generation tool',
-    owner_id: 'demo', status: 'active', created_at: '2026-04-08T09:00:00Z',
-    modules: ['frontend', 'backend', 'authentication', 'database', 'integrations'].map((t, i) => ({
-      id: `m${i + 5}`, project_id: 'demo-2', type: t as any, assigned_to: null, status: 'standardized' as any, code_path: null, updated_at: '',
-    })),
-  },
-  {
-    id: 'demo-3', name: 'DocuMind', description: 'Smart documentation',
-    owner_id: 'demo', status: 'active', created_at: '2026-04-06T15:00:00Z',
-    modules: ['frontend', 'backend'].map((t, i) => ({
-      id: `m${i + 10}`, project_id: 'demo-3', type: t as any, assigned_to: null, status: 'merged' as any, code_path: null, updated_at: '',
-    })),
-  },
-  {
-    id: 'demo-4', name: 'FlowOps', description: 'Automation workflows',
-    owner_id: 'demo', status: 'error', created_at: '2026-04-01T10:00:00Z',
-    modules: ['frontend'].map((t, i) => ({
-      id: `m${i + 12}`, project_id: 'demo-4', type: t as any, assigned_to: null, status: 'unassigned' as any, code_path: null, updated_at: '',
-    })),
-  },
-];
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -59,18 +28,36 @@ export default function DashboardPage() {
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [idCopied, setIdCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [userName, setUserName] = useState('Developer');
 
   useEffect(() => {
-    if (!localStorage.getItem('auth_token')) { router.push('/login'); return; }
+    const token = localStorage.getItem('auth_token');
+    if (!token) { 
+      router.push('/login'); 
+      return; 
+    }
+
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const u = JSON.parse(storedUser);
+        const name = u.user_metadata?.username || u.username || u.email?.split('@')[0] || 'Developer';
+        setUserName(name);
+      } catch {}
+    }
+
     load();
   }, [router]);
 
   const load = async () => {
     try {
       const data = await api.projects.list();
-      setProjects(data.owned?.length ? data.owned : DEMO);
-    } catch {
-      setProjects(DEMO);
+      // Only show real user projects, never fallback to fake sample projects
+      const userProjects = [...(data.owned || []), ...(data.participating || [])];
+      setProjects(userProjects);
+    } catch (err) {
+      console.error('Failed to load projects:', err);
+      setProjects([]);
     } finally {
       setLoading(false);
     }
@@ -84,16 +71,9 @@ export default function DashboardPage() {
       const p = await api.projects.create({ name, description: desc });
       setProjects((prev) => [p, ...prev]);
       setCreatedProject(p);
-    } catch {
-      const demo: Project = {
-        id: `demo-${Date.now()}`, name, description: desc,
-        owner_id: 'demo', status: 'active', created_at: new Date().toISOString(),
-        modules: ['frontend', 'backend', 'authentication', 'database', 'integrations'].map((t, i) => ({
-          id: `m${i}`, project_id: '', type: t as any, assigned_to: null, status: 'unassigned' as any, code_path: null, updated_at: '',
-        })),
-      };
-      setProjects((prev) => [demo, ...prev]);
-      setCreatedProject(demo);
+      await load();
+    } catch (err: any) {
+      alert(err.message || 'Failed to create project');
     } finally {
       setCreating(false);
     }
@@ -121,12 +101,16 @@ export default function DashboardPage() {
       const { link } = await api.invites.create(createdProject.id);
       setInviteLink(link);
     } catch {
-      setInviteLink(`${window.location.origin}/invite/demo-${Date.now()}`);
+      setInviteLink(`${window.location.origin}/invite/inv_${Date.now()}`);
     }
   };
 
   const totalModules = projects.reduce((s, p) => s + (p.modules?.length || 0), 0);
   const completedModules = projects.reduce((s, p) => s + (p.modules?.filter(m => ['merged', 'standardized', 'uploaded'].includes(m.status)).length || 0), 0);
+  const collaboratorsCount = projects.reduce((acc, p) => {
+    const assigned = p.modules?.filter(m => m.assigned_to).map(m => m.assigned_to) || [];
+    return acc + new Set(assigned).size;
+  }, 0);
 
   return (
     <div className="dash-layout">
@@ -145,7 +129,7 @@ export default function DashboardPage() {
 
               <div className="greeting-block">
                 <h2 className="greeting-sub">{getGreeting()},</h2>
-                <h1 className="greeting-main">Aadarsh 👋</h1>
+                <h1 className="greeting-main">{userName} 👋</h1>
                 <p className="greeting-desc">Turn your ideas into real products with the power of AI.</p>
               </div>
 
@@ -158,22 +142,22 @@ export default function DashboardPage() {
               </button>
 
               <div className="stats-list">
-                <div className="stat-item" onClick={() => {}}>
+                <div className="stat-item" onClick={() => router.push('/dashboard/projects')}>
                   <span className="stat-val">{projects.length}</span>
                   <span className="stat-label">Projects</span>
                   <span className="stat-arrow">→</span>
                 </div>
-                <div className="stat-item">
-                  <span className="stat-val">8</span>
+                <div className="stat-item" onClick={() => router.push('/dashboard/collaborations')}>
+                  <span className="stat-val">{collaboratorsCount}</span>
                   <span className="stat-label">Collaborators</span>
                   <span className="stat-arrow">→</span>
                 </div>
-                <div className="stat-item">
+                <div className="stat-item" onClick={() => router.push('/dashboard/modules')}>
                   <span className="stat-val">{totalModules}</span>
                   <span className="stat-label">Modules</span>
                   <span className="stat-arrow">→</span>
                 </div>
-                <div className="stat-item">
+                <div className="stat-item" onClick={() => router.push('/dashboard/deployments')}>
                   <span className="stat-val">{completedModules}</span>
                   <span className="stat-label">Deployments</span>
                   <span className="stat-arrow">→</span>
@@ -213,10 +197,10 @@ export default function DashboardPage() {
             <form className="modal-box" onClick={(e) => e.stopPropagation()} onSubmit={handleCreate}>
               <button type="button" className="modal-close" onClick={handleResetCreate}><X size={18} /></button>
               <h3 className="modal-title">New Project</h3>
-              <p className="modal-desc">Creates 5 modules ready to assign.</p>
+              <p className="modal-desc">Creates 5 scaffolded modules ready for your team.</p>
               <div className="modal-field">
                 <label className="modal-label">Project Name</label>
-                <input className="modal-input" placeholder="My App" value={name} onChange={(e) => setName(e.target.value)} required autoFocus />
+                <input className="modal-input" placeholder="e.g. My App" value={name} onChange={(e) => setName(e.target.value)} required autoFocus />
               </div>
               <div className="modal-field">
                 <label className="modal-label">Description <span className="modal-optional">(optional)</span></label>
@@ -256,7 +240,11 @@ export default function DashboardPage() {
                   <LinkIcon size={14} style={{ marginRight: '8px' }} /> Generate Invite Link
                 </button>
               )}
-              <button className="btn-cancel" style={{ width: '100%' }} onClick={handleResetCreate}>Done</button>
+              
+              <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+                <button className="btn-cancel" style={{ flex: 1 }} onClick={handleResetCreate}>Done</button>
+                <button className="btn-create" style={{ flex: 1 }} onClick={() => router.push(`/project/${createdProject.id}`)}>Open Workspace →</button>
+              </div>
             </div>
           )}
         </div>
