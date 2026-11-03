@@ -1,11 +1,14 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+// Use same-origin relative /api by default, or an explicit override if provided
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
 
-// Typed fetch wrapper for backend API with automatic refresh token support
+// Typed fetch wrapper for API with automatic refresh token support
 async function apiRequest<T = unknown>(
     endpoint: string,
     options: RequestInit = {}
 ): Promise<T> {
-    const url = `${API_BASE}${endpoint}`;
+    const cleanBase = API_BASE.replace(/\/+$/, '');
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const url = `${cleanBase}${cleanEndpoint}`;
 
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -25,7 +28,7 @@ async function apiRequest<T = unknown>(
         const refreshToken = localStorage.getItem('refresh_token');
         if (refreshToken) {
             try {
-                const refreshRes = await fetch(`${API_BASE}/auth/refresh`, {
+                const refreshRes = await fetch(`${cleanBase}/auth/refresh`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ refreshToken })
@@ -60,7 +63,10 @@ async function apiRequest<T = unknown>(
 
 // Upload file (multipart form data)
 async function apiUpload<T = unknown>(endpoint: string, file: File): Promise<T> {
-    const url = `${API_BASE}${endpoint}`;
+    const cleanBase = API_BASE.replace(/\/+$/, '');
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const url = `${cleanBase}${cleanEndpoint}`;
+
     const formData = new FormData();
     formData.append('code', file);
 

@@ -1,0 +1,42 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { supabaseServer } from '@/lib/supabase-server';
+import { verifyAccessToken } from '@/lib/auth-tokens';
+
+function getAuthUser(req: NextRequest) {
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+    const token = authHeader.split(' ')[1];
+    return verifyAccessToken(token);
+}
+
+// POST /api/modules/[id]/unassign
+export async function POST(
+    req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const user = getAuthUser(req);
+        if (!user) {
+            return NextResponse.json({ error: 'Missing or invalid authorization header' }, { status: 401 });
+        }
+
+        const { id } = await params;
+
+        const { data: mod } = await supabaseServer.from('modules').select('*').eq('id', id).single();
+        if (!mod) return NextResponse.json({ error: 'Module not found' }, { status: 404 });
+
+        if (mod.assigned_to !== user.id) {
+            return NextResponse.json({ error: 'You are not assigned to this module' }, { status: 403 });
+        }
+
+        const { data, error } = await supabaseServer
+            .from('modules')
+            .update({ assigned_to: null, status: 'unassigned', updated_at: new Date().toISOString() })
+            .eq('id', id);
+
+        if (error) throw error;
+        return NextResponse.json(data || { ...mod, assigned_to: null, status: 'unassigned' });
+    } catch (err: any) {
+        return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    }
+}
