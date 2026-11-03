@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.SUPABASE_JWT_SECRET || process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET || 'wii_build_jwt_secret_dev_2026';
 
 /**
  * Middleware: verifies Bearer token from Authorization header.
@@ -15,26 +15,17 @@ function authenticate(req, res, next) {
 
     const token = authHeader.split(' ')[1];
 
-    // Support demo tokens
-    if (token.startsWith('demo-token') || token.startsWith('local-token')) {
-        req.user = {
-            id: token === 'demo-token' ? 'demo-user' : token.replace('local-token-', 'user-'),
-            email: 'demo@example.com',
-            role: 'authenticated',
-        };
-        return next();
-    }
-
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
         req.user = {
             id: decoded.sub,
             email: decoded.email,
-            role: decoded.role,
+            username: decoded.username,
+            role: decoded.role || 'authenticated',
         };
-        next();
+        return next();
     } catch (err) {
-        return res.status(401).json({ error: 'Invalid or expired token' });
+        return res.status(401).json({ error: 'Invalid or expired token. Please log in again.' });
     }
 }
 
@@ -46,9 +37,15 @@ function optionalAuth(req, res, next) {
     if (!authHeader || !authHeader.startsWith('Bearer ')) return next();
 
     const token = authHeader.split(' ')[1];
+
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        req.user = { id: decoded.sub, email: decoded.email, role: decoded.role };
+        req.user = {
+            id: decoded.sub,
+            email: decoded.email,
+            username: decoded.username,
+            role: decoded.role || 'authenticated',
+        };
     } catch {
         // Token invalid — continue as unauthenticated
     }

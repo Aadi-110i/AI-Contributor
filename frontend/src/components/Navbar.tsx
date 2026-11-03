@@ -67,12 +67,14 @@ export default function Navbar() {
                             href="/dashboard"
                             style={{
                                 textDecoration: 'none',
-                                color: pathname === '/dashboard' ? '#ffffff' : 'rgba(255,255,255,0.7)',
+                                color: (!scrolled && isHome)
+                                    ? 'rgba(17,17,17,0.7)'
+                                    : 'rgba(255,255,255,0.7)',
                                 fontWeight: 500,
                                 fontSize: '0.8125rem',
                                 padding: '6px 14px',
                                 borderRadius: '6px',
-                                transition: 'color 0.2s',
+                                transition: 'color 0.3s ease',
                             }}
                         >
                             Dashboard
@@ -86,11 +88,15 @@ export default function Navbar() {
                                 fontSize: '0.8125rem',
                                 fontWeight: 500,
                                 background: 'transparent',
-                                color: 'rgba(255,255,255,0.7)',
-                                border: '1px solid rgba(255,255,255,0.12)',
+                                color: (!scrolled && isHome)
+                                    ? 'rgba(17,17,17,0.7)'
+                                    : 'rgba(255,255,255,0.7)',
+                                border: (!scrolled && isHome)
+                                    ? '1px solid rgba(17,17,17,0.15)'
+                                    : '1px solid rgba(255,255,255,0.12)',
                                 borderRadius: '4px',
                                 cursor: 'pointer',
-                                transition: 'all 0.2s',
+                                transition: 'all 0.3s ease',
                             }}
                         >
                             Sign Out

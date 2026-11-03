@@ -38,6 +38,7 @@
     { "id": "demo-user", "username": "DemoUser", "avatar_url": "" },
     { "id": "demo-admin", "username": "Admin", "avatar_url": "" },
     { "id": "demo-lead", "username": "TeamLead", "avatar_url": "" },
-    { "id": "demo-dev", "username": "Developer", "avatar_url": "" }
+    { "id": "demo-dev", "username": "Developer", "avatar_url": "" },
+    { "id": "local-dev-user", "username": "Developer", "avatar_url": "" }
   ]
 }

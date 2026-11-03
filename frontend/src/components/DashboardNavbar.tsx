@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Home, FolderOpen, Users2, Cpu, Layers, Activity, Rocket, Search, Bell, ChevronDown, LogOut, ArrowLeft } from 'lucide-react';
@@ -7,6 +8,20 @@ import { Home, FolderOpen, Users2, Cpu, Layers, Activity, Rocket, Search, Bell, 
 export default function DashboardNavbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [userName, setUserName] = useState('User');
+  const [userInitial, setUserInitial] = useState('U');
+
+  useEffect(() => {
+    const stored = localStorage.getItem('user');
+    if (stored) {
+      try {
+        const u = JSON.parse(stored);
+        const name = u.user_metadata?.username || u.email?.split('@')[0] || 'User';
+        setUserName(name);
+        setUserInitial(name.charAt(0).toUpperCase());
+      } catch {}
+    }
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('auth_token');
@@ -45,9 +60,9 @@ export default function DashboardNavbar() {
         <button className="nav-icon-btn" aria-label="Notifications"><Bell size={16} /></button>
 
         <div className="nav-user-profile">
-          <div className="nav-avatar">A</div>
+          <div className="nav-avatar">{userInitial}</div>
           <div className="nav-user-info">
-            <span className="nav-user-name">Aadarsh</span>
+            <span className="nav-user-name">{userName}</span>
             <span className="nav-user-role">Developer</span>
           </div>
           <ChevronDown size={14} className="nav-chevron" />

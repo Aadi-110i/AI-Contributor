@@ -1,6 +1,6 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
-// Typed fetch wrapper for backend API
+// Typed fetch wrapper for backend API with automatic refresh token support
 async function apiRequest<T = unknown>(
     endpoint: string,
     options: RequestInit = {}
@@ -18,7 +18,37 @@ async function apiRequest<T = unknown>(
         if (token) headers.Authorization = `Bearer ${token}`;
     }
 
-    const res = await fetch(url, { ...options, headers });
+    let res = await fetch(url, { ...options, headers });
+
+    // Handle 401: Token expired or invalid -> Try refresh token
+    if (res.status === 401 && typeof window !== 'undefined' && !endpoint.startsWith('/auth/')) {
+        const refreshToken = localStorage.getItem('refresh_token');
+        if (refreshToken) {
+            try {
+                const refreshRes = await fetch(`${API_BASE}/auth/refresh`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refreshToken })
+                });
+
+                if (refreshRes.ok) {
+                    const data = await refreshRes.json();
+                    localStorage.setItem('auth_token', data.token);
+                    if (data.refreshToken) {
+                        localStorage.setItem('refresh_token', data.refreshToken);
+                    }
+                    headers.Authorization = `Bearer ${data.token}`;
+                    res = await fetch(url, { ...options, headers });
+                } else {
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('refresh_token');
+                    localStorage.removeItem('user');
+                }
+            } catch {
+                // If refresh fails, continue with original 401 error
+            }
+        }
+    }
 
     if (!res.ok) {
         const error = await res.json().catch(() => ({ error: 'Request failed' }));
@@ -49,6 +79,23 @@ async function apiUpload<T = unknown>(endpoint: string, file: File): Promise<T> 
 }
 
 export const api = {
+    auth: {
+        signup: (data: { email: string; password: string; username?: string }) =>
+            apiRequest<{ user: { id: string; email: string; username: string }; token: string; refreshToken: string }>('/auth/signup', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            }),
+        login: (data: { email: string; password: string }) =>
+            apiRequest<{ user: { id: string; email: string; username: string }; token: string; refreshToken: string }>('/auth/login', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            }),
+        refresh: (refreshToken: string) =>
+            apiRequest<{ token: string; refreshToken: string }>('/auth/refresh', {
+                method: 'POST',
+                body: JSON.stringify({ refreshToken })
+            })
+    },
     projects: {
         list: () => apiRequest<{ owned: Project[]; participating: Project[] }>('/projects'),
         get: (id: string) => apiRequest<Project>(`/projects/${id}`),

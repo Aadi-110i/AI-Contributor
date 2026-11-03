@@ -1,0 +1,126 @@
+{
+  "projects": [
+    {
+      "id": "jmvdxs",
+      "created_at": "2026-11-02T15:47:07.719Z",
+      "name": "ProjectJio",
+      "description": "",
+      "owner_id": "local-dev-user",
+      "status": "active"
+    },
+    {
+      "id": "id_p4zuy2q",
+      "created_at": "2026-11-02T16:33:54.096Z",
+      "name": "Alice AI Engine",
+      "description": "Production AI engine",
+      "owner_id": "usr_03ccnupm",
+      "status": "active"
+    }
+  ],
+  "modules": [
+    {
+      "id": "fert0d",
+      "created_at": "2026-11-02T15:47:07.719Z",
+      "project_id": "jmvdxs",
+      "type": "frontend",
+      "status": "unassigned"
+    },
+    {
+      "id": "s4fjhf",
+      "created_at": "2026-11-02T15:47:07.719Z",
+      "project_id": "jmvdxs",
+      "type": "backend",
+      "status": "unassigned"
+    },
+    {
+      "id": "68s5lv",
+      "created_at": "2026-11-02T15:47:07.719Z",
+      "project_id": "jmvdxs",
+      "type": "authentication",
+      "status": "unassigned"
+    },
+    {
+      "id": "nxhtl3",
+      "created_at": "2026-11-02T15:47:07.719Z",
+      "project_id": "jmvdxs",
+      "type": "database",
+      "status": "unassigned"
+    },
+    {
+      "id": "cnu9gd",
+      "created_at": "2026-11-02T15:47:07.719Z",
+      "project_id": "jmvdxs",
+      "type": "integrations",
+      "status": "unassigned"
+    },
+    {
+      "id": "id_2ddf4a5",
+      "created_at": "2026-11-02T16:33:54.101Z",
+      "project_id": "id_p4zuy2q",
+      "type": "frontend",
+      "status": "unassigned"
+    },
+    {
+      "id": "id_qkev8nb",
+      "created_at": "2026-11-02T16:33:54.101Z",
+      "project_id": "id_p4zuy2q",
+      "type": "backend",
+      "status": "unassigned"
+    },
+    {
+      "id": "id_mkjxxyb",
+      "created_at": "2026-11-02T16:33:54.101Z",
+      "project_id": "id_p4zuy2q",
+      "type": "authentication",
+      "status": "unassigned"
+    },
+    {
+      "id": "id_pxgsehk",
+      "created_at": "2026-11-02T16:33:54.101Z",
+      "project_id": "id_p4zuy2q",
+      "type": "database",
+      "status": "unassigned"
+    },
+    {
+      "id": "id_ozftgv0",
+      "created_at": "2026-11-02T16:33:54.101Z",
+      "project_id": "id_p4zuy2q",
+      "type": "integrations",
+      "status": "unassigned"
+    }
+  ],
+  "invites": [],
+  "merge_logs": [],
+  "profiles": [
+    {
+      "id": "demo-admin",
+      "username": "Admin",
+      "avatar_url": ""
+    },
+    {
+      "id": "demo-lead",
+      "username": "TeamLead",
+      "avatar_url": ""
+    },
+    {
+      "id": "demo-dev",
+      "username": "Developer",
+      "avatar_url": ""
+    },
+    {
+      "id": "usr_03ccnupm",
+      "created_at": "2026-11-02T16:32:56.706Z",
+      "username": "Alice",
+      "avatar_url": ""
+    }
+  ],
+  "users": [
+    {
+      "id": "usr_03ccnupm",
+      "created_at": "2026-11-02T16:32:56.698Z",
+      "email": "newuser@example.com",
+      "username": "Alice",
+      "password": "$2b$10$toT3ITPs5mr8jEbUM7wVyOvufdUZvkmncyZl8Z5KtdiJeAlfhi6e2"
+    }
+  ]
+}

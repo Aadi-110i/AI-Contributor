@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, User, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
@@ -18,50 +18,51 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  // Check if Supabase is using placeholder config
-  const isSupabasePlaceholder =
-    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co';
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    try {
-      if (isSupabasePlaceholder) {
-        if (!email.trim() || !password.trim()) throw new Error('Enter both email and password.');
-        if (isSignUp && !username.trim()) throw new Error('Enter a username.');
-        if (password.length < 6) throw new Error('Password must be 6+ characters.');
 
-        const localUser = {
-          id: `local-${Date.now()}`,
-          email: email.trim(),
-          user_metadata: { username: isSignUp ? username.trim() : email.split('@')[0] },
-        };
-        localStorage.setItem('auth_token', `local-token-${Date.now()}`);
-        localStorage.setItem('user', JSON.stringify(localUser));
-        router.push('/dashboard');
-        return;
+    try {
+      if (!email.trim() || !password.trim()) {
+        throw new Error('Please enter both email and password.');
+      }
+      if (password.length < 6) {
+        throw new Error('Password must be at least 6 characters.');
       }
 
       if (isSignUp) {
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email, password,
-          options: { data: { username } },
+        if (!username.trim()) throw new Error('Please enter a username.');
+
+        const res = await api.auth.signup({
+          email: email.trim(),
+          password,
+          username: username.trim(),
         });
-        if (signUpError) throw signUpError;
-        if (data.session) {
-          localStorage.setItem('auth_token', data.session.access_token);
-          localStorage.setItem('user', JSON.stringify(data.user));
-          router.push('/dashboard');
-        } else {
-          setError('Check your email for a confirmation link.');
-        }
+
+        localStorage.setItem('auth_token', res.token);
+        localStorage.setItem('refresh_token', res.refreshToken);
+        localStorage.setItem('user', JSON.stringify({
+          id: res.user.id,
+          email: res.user.email,
+          user_metadata: { username: res.user.username },
+        }));
+
+        router.push('/dashboard');
       } else {
-        const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-        if (signInError) throw signInError;
-        localStorage.setItem('auth_token', data.session.access_token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        const res = await api.auth.login({
+          email: email.trim(),
+          password,
+        });
+
+        localStorage.setItem('auth_token', res.token);
+        localStorage.setItem('refresh_token', res.refreshToken);
+        localStorage.setItem('user', JSON.stringify({
+          id: res.user.id,
+          email: res.user.email,
+          user_metadata: { username: res.user.username },
+        }));
+
         router.push('/dashboard');
       }
     } catch (err) {
@@ -290,34 +291,31 @@ export default function LoginPage() {
           align-items: center;
         }
 
-        /* Back to Home floating pill */
+        /* Back arrow button */
         .auth-back-btn {
           position: fixed;
-          top: 24px;
-          left: 24px;
+          top: 20px;
+          left: 20px;
           z-index: 200;
           display: flex;
           align-items: center;
-          gap: 7px;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
           text-decoration: none;
-          color: rgba(255,255,255,0.75);
-          font-size: 0.8125rem;
-          font-weight: 500;
-          font-family: 'Inter', sans-serif;
-          letter-spacing: 0.01em;
-          padding: 8px 16px;
-          border-radius: 100px;
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.12);
+          color: rgba(255,255,255,0.85);
+          border-radius: 8px;
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.2);
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
-          transition: all 0.25s ease;
+          transition: all 0.2s ease;
         }
 
         .auth-back-btn:hover {
           color: #fff;
-          background: rgba(255,255,255,0.11);
-          border-color: rgba(255,255,255,0.22);
+          background: rgba(255,255,255,0.15);
+          border-color: rgba(255,255,255,0.35);
           transform: translateX(-2px);
         }
 

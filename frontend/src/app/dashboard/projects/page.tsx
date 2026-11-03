@@ -110,8 +110,9 @@ export default function ProjectsPage() {
     setCreating(true);
     try {
       const p = await api.projects.create({ name, description: desc });
-      setProjects((prev) => [p, ...prev]);
       setCreatedProject(p);
+      // Reload projects from backend to get fresh list
+      await loadProjects();
     } catch {
       const demo: Project = {
         id: `demo-${Date.now()}`,
@@ -390,7 +391,7 @@ export default function ProjectsPage() {
               )}
 
               <div className="modal-actions">
-                <button className="btn-cancel" onClick={() => { setShowCreate(false); setCreatedProject(null); }}>
+                <button className="btn-cancel" onClick={() => { setShowCreate(false); setCreatedProject(null); setName(''); setDesc(''); }}>
                   Close
                 </button>
                 <button className="btn-create" onClick={() => router.push(`/project/${createdProject.id}`)}>
