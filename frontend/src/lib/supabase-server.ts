@@ -1,35 +1,27 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kpflgzhxweuiedlwdpbg.supabase.co';
-// Use the valid anon/publishable key which was tested and works for public schema tables
-const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_SoCG6MEuykaC8E_GIo9VhQ_wTagDZWV';
+const SUPABASE_PROJECT_URL = 'https://kpflgzhxweuiedlwdpbg.supabase.co';
+const SUPABASE_PUBLIC_KEY = 'sb_publishable_SoCG6MEuykaC8E_GIo9VhQ_wTagDZWV';
 
-let client: SupabaseClient | null = null;
+export function getSupabaseServer() {
+    let url = process.env.NEXT_PUBLIC_SUPABASE_URL || SUPABASE_PROJECT_URL;
+    if (!url || !url.startsWith('http')) {
+        url = SUPABASE_PROJECT_URL;
+    }
 
-export function getSupabaseServer(): SupabaseClient {
-    if (client) return client;
+    let key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || SUPABASE_PUBLIC_KEY;
+    if (!key) {
+        key = SUPABASE_PUBLIC_KEY;
+    }
 
-    const url = (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL.startsWith('http')) 
-        ? process.env.NEXT_PUBLIC_SUPABASE_URL 
-        : SUPABASE_URL;
-
-    // In Next.js, prioritize the valid publishable key that connects directly to the Supabase project
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || SUPABASE_KEY;
-
-    client = createClient(url, key, {
+    return createClient(url, key, {
         auth: {
             persistSession: false,
             autoRefreshToken: false,
         }
     });
-
-    return client;
 }
 
-export const supabaseServer = new Proxy({} as SupabaseClient, {
-    get(_target, prop) {
-        const instance = getSupabaseServer();
-        const value = (instance as any)[prop];
-        return typeof value === 'function' ? value.bind(instance) : value;
-    }
-});
+export const supabaseServer = {
+    from: (table: string) => getSupabaseServer().from(table)
+};
