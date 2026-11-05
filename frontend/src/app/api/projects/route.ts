@@ -9,6 +9,29 @@ function getAuthUser(req: NextRequest) {
     return verifyAccessToken(token);
 }
 
+async function attachProfilesToProjects(projects: any[]) {
+    if (!projects || projects.length === 0) return;
+    const allModules = projects.flatMap((p: any) => p.modules || []);
+    const assignedUserIds = Array.from(new Set(allModules.map((m: any) => m.assigned_to).filter(Boolean)));
+    if (assignedUserIds.length === 0) return;
+
+    const { data: profiles } = await supabaseServer
+        .from('profiles')
+        .select('id, username, avatar_url')
+        .in('id', assignedUserIds);
+
+    const profileMap: Record<string, any> = {};
+    (profiles || []).forEach((prof: any) => {
+        profileMap[prof.id] = prof;
+    });
+
+    projects.forEach((p: any) => {
+        (p.modules || []).forEach((m: any) => {
+            m.profiles = m.assigned_to && profileMap[m.assigned_to] ? profileMap[m.assigned_to] : null;
+        });
+    });
+}
+
 // GET /api/projects - list projects for user
 export async function GET(req: NextRequest) {
     try {
@@ -20,7 +43,7 @@ export async function GET(req: NextRequest) {
         // Projects the user owns
         const { data: owned, error: ownErr } = await supabaseServer
             .from('projects')
-            .select('*, modules(*, profiles:assigned_to(id, username, avatar_url))')
+            .select('*, modules(*)')
             .eq('owner_id', user.id)
             .order('created_at', { ascending: false });
 
@@ -42,13 +65,17 @@ export async function GET(req: NextRequest) {
         if (assignedProjectIds.length > 0) {
             const { data, error } = await supabaseServer
                 .from('projects')
-                .select('*, modules(*, profiles:assigned_to(id, username, avatar_url))')
+                .select('*, modules(*)')
                 .in('id', assignedProjectIds);
             if (error) throw error;
             participating = data || [];
         }
 
-        return NextResponse.json({ owned: owned || [], participating });
+        const ownedList = owned || [];
+        await attachProfilesToProjects(ownedList);
+        await attachProfilesToProjects(participating);
+
+        return NextResponse.json({ owned: ownedList, participating });
     } catch (err: any) {
         console.error('List projects error:', err);
         return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
@@ -69,9 +96,12 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Project name is required' }, { status: 400 });
         }
 
+        const projectId = 'proj_' + Math.random().toString(36).substring(2, 10);
+
         const { data, error } = await supabaseServer
             .from('projects')
             .insert({
+                id: projectId,
                 name: name.trim(),
                 description: description || '',
                 owner_id: user.id,
@@ -85,6 +115,7 @@ export async function POST(req: NextRequest) {
         // Auto-create default modules for the project
         const moduleTypes = ['frontend', 'backend', 'authentication', 'database', 'integrations'];
         const modules = moduleTypes.map((type) => ({
+            id: 'mod_' + Math.random().toString(36).substring(2, 10),
             project_id: data.id,
             type,
             status: 'unassigned',
@@ -92,6 +123,8 @@ export async function POST(req: NextRequest) {
 
         const { error: modError } = await supabaseServer.from('modules').insert(modules);
         if (modError) throw modError;
+
+        data.modules = modules;
 
         return NextResponse.json(data, { status: 201 });
     } catch (err: any) {

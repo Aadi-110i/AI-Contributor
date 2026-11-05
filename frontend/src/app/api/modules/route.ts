@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
         let query = supabaseServer
             .from('modules')
-            .select('*, projects:project_id(name, id), profiles:assigned_to(id, username, avatar_url)');
+            .select('*, projects:project_id(name, id)');
 
         if (projectId) {
             query = query.eq('project_id', projectId);
@@ -31,9 +31,29 @@ export async function GET(req: NextRequest) {
         const { data, error } = await query;
         if (error) throw error;
 
-        return NextResponse.json(data || []);
+        const modules = data || [];
+        const assignedUserIds = Array.from(
+            new Set(modules.map((m: any) => m.assigned_to).filter(Boolean))
+        );
+
+        if (assignedUserIds.length > 0) {
+            const { data: profiles } = await supabaseServer
+                .from('profiles')
+                .select('id, username, avatar_url')
+                .in('id', assignedUserIds);
+
+            const profileMap: Record<string, any> = {};
+            (profiles || []).forEach((prof: any) => {
+                profileMap[prof.id] = prof;
+            });
+
+            modules.forEach((m: any) => {
+                m.profiles = m.assigned_to && profileMap[m.assigned_to] ? profileMap[m.assigned_to] : null;
+            });
+        }
+
+        return NextResponse.json(modules);
     } catch (err: any) {
         return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
     }
 }
-

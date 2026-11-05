@@ -24,12 +24,33 @@ export async function GET(
 
         const { data, error } = await supabaseServer
             .from('projects')
-            .select('*, modules(*, profiles:assigned_to(id, username, avatar_url))')
+            .select('*, modules(*)')
             .eq('id', id)
             .single();
 
         if (error || !data) {
             return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+        }
+
+        // Attach profiles to modules
+        const assignedUserIds = Array.from(
+            new Set((data.modules || []).map((m: any) => m.assigned_to).filter(Boolean))
+        );
+
+        if (assignedUserIds.length > 0) {
+            const { data: profiles } = await supabaseServer
+                .from('profiles')
+                .select('id, username, avatar_url')
+                .in('id', assignedUserIds);
+
+            const profileMap: Record<string, any> = {};
+            (profiles || []).forEach((prof: any) => {
+                profileMap[prof.id] = prof;
+            });
+
+            (data.modules || []).forEach((m: any) => {
+                m.profiles = m.assigned_to && profileMap[m.assigned_to] ? profileMap[m.assigned_to] : null;
+            });
         }
 
         return NextResponse.json(data);
