@@ -3,6 +3,24 @@ const router = express.Router();
 const supabase = require('../lib/supabase');
 const { authenticate } = require('../middleware/auth');
 
+// Helper: attach profile data to modules manually (avoids PGRST200 schema cache error
+// because modules.assigned_to has no registered FK to profiles in the schema cache)
+async function attachProfilesToModules(modules) {
+    if (!modules || modules.length === 0) return modules;
+    const userIds = [...new Set(modules.map((m) => m.assigned_to).filter(Boolean))];
+    if (userIds.length === 0) return modules;
+    const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url')
+        .in('id', userIds);
+    const profileMap = {};
+    (profiles || []).forEach((p) => { profileMap[p.id] = p; });
+    return modules.map((m) => ({
+        ...m,
+        profiles: m.assigned_to ? (profileMap[m.assigned_to] || null) : null,
+    }));
+}
+
 // Create a new project
 router.post('/', authenticate, async (req, res, next) => {
     try {
@@ -43,13 +61,19 @@ router.post('/', authenticate, async (req, res, next) => {
 router.get('/', authenticate, async (req, res, next) => {
     try {
         // Projects the user owns
-        const { data: owned, error: ownErr } = await supabase
+        const { data: ownedRaw, error: ownErr } = await supabase
             .from('projects')
-            .select('*, modules(*, profiles:assigned_to(id, username, avatar_url))')
+            .select('*, modules(*)')
             .eq('owner_id', req.user.id)
             .order('created_at', { ascending: false });
 
         if (ownErr) throw ownErr;
+
+        // Attach profiles to each project's modules
+        const owned = await Promise.all((ownedRaw || []).map(async (p) => ({
+            ...p,
+            modules: await attachProfilesToModules(p.modules),
+        })));
 
         // Projects the user is assigned to a module in
         const { data: assigned, error: assErr } = await supabase
@@ -59,18 +83,21 @@ router.get('/', authenticate, async (req, res, next) => {
 
         if (assErr) throw assErr;
 
-        const assignedProjectIds = assigned
+        const assignedProjectIds = (assigned || [])
             .map((m) => m.project_id)
             .filter((id) => !owned.some((p) => p.id === id));
 
         let participating = [];
         if (assignedProjectIds.length > 0) {
-            const { data, error } = await supabase
+            const { data: partRaw, error } = await supabase
                 .from('projects')
-                .select('*, modules(*, profiles:assigned_to(id, username, avatar_url))')
+                .select('*, modules(*)')
                 .in('id', assignedProjectIds);
             if (error) throw error;
-            participating = data;
+            participating = await Promise.all((partRaw || []).map(async (p) => ({
+                ...p,
+                modules: await attachProfilesToModules(p.modules),
+            })));
         }
 
         res.json({ owned, participating });
@@ -84,13 +111,14 @@ router.get('/:id', authenticate, async (req, res, next) => {
     try {
         const { data, error } = await supabase
             .from('projects')
-            .select('*, modules(*, profiles:assigned_to(id, username, avatar_url))')
+            .select('*, modules(*)')
             .eq('id', req.params.id)
             .single();
 
         if (error) throw error;
         if (!data) return res.status(404).json({ error: 'Project not found' });
 
+        data.modules = await attachProfilesToModules(data.modules);
         res.json(data);
     } catch (err) {
         next(err);

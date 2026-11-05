@@ -31,17 +31,43 @@ const upload = multer({
     },
 });
 
+// Helper: attach profile to a single module (avoids PGRST200)
+async function attachProfile(mod) {
+    if (!mod || !mod.assigned_to) return { ...mod, profiles: null };
+    const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url')
+        .eq('id', mod.assigned_to);
+    return { ...mod, profiles: profiles?.[0] || null };
+}
+
 // Get all modules for a project
 router.get('/project/:projectId', authenticate, async (req, res, next) => {
     try {
         const { data, error } = await supabase
             .from('modules')
-            .select('*, profiles:assigned_to(id, username, avatar_url)')
+            .select('*')
             .eq('project_id', req.params.projectId)
             .order('type');
 
         if (error) throw error;
-        res.json(data);
+
+        const modules = data || [];
+        const userIds = [...new Set(modules.map((m) => m.assigned_to).filter(Boolean))];
+        let profileMap = {};
+        if (userIds.length > 0) {
+            const { data: profiles } = await supabase
+                .from('profiles')
+                .select('id, username, avatar_url')
+                .in('id', userIds);
+            (profiles || []).forEach((p) => { profileMap[p.id] = p; });
+        }
+        const result = modules.map((m) => ({
+            ...m,
+            profiles: m.assigned_to ? (profileMap[m.assigned_to] || null) : null,
+        }));
+
+        res.json(result);
     } catch (err) {
         next(err);
     }
@@ -73,7 +99,7 @@ router.post('/:id/assign', authenticate, async (req, res, next) => {
             .single();
 
         if (error) throw error;
-        res.json(data);
+        res.json(await attachProfile(data));
     } catch (err) {
         next(err);
     }
@@ -147,14 +173,14 @@ router.get('/:id/status', authenticate, async (req, res, next) => {
     try {
         const { data, error } = await supabase
             .from('modules')
-            .select('*, profiles:assigned_to(id, username, avatar_url)')
+            .select('*')
             .eq('id', req.params.id)
             .single();
 
         if (error) throw error;
         if (!data) return res.status(404).json({ error: 'Module not found' });
 
-        res.json(data);
+        res.json(await attachProfile(data));
     } catch (err) {
         next(err);
     }
