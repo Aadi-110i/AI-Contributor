@@ -25,9 +25,29 @@ export async function POST(
         const { data: project } = await supabaseServer.from('projects').select('*').eq('id', id).single();
         if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
 
+        // Enforce that all modules must be uploaded before merging
+        const { data: projectModules } = await supabaseServer
+            .from('modules')
+            .select('*')
+            .eq('project_id', id);
+
+        const unready = (projectModules || []).filter(
+            (m) => !['uploaded', 'standardized', 'merged'].includes(m.status)
+        );
+
+        if (projectModules && projectModules.length > 0 && unready.length > 0) {
+            return NextResponse.json(
+                {
+                    error: `Cannot merge: ${unready.length} of ${projectModules.length} modules have not been uploaded yet.`
+                },
+                { status: 400 }
+            );
+        }
+
         const logOutput = [
             '=== MERGE WORKFLOW INITIATED ===',
             `[INFO] Target Project: ${project.name} (${id})`,
+            `[INFO] Verified ${projectModules?.length || 0}/${projectModules?.length || 0} modules uploaded`,
             '[INFO] Verifying architectural constraints...',
             '[SUCCESS] Codebase verified and synchronized',
             '[BUILD] Build tests executed successfully',
@@ -46,6 +66,7 @@ export async function POST(
 
         if (error) throw error;
 
+        await supabaseServer.from('modules').update({ status: 'merged' }).eq('project_id', id);
         await supabaseServer.from('projects').update({ status: 'merged' }).eq('id', id);
 
         return NextResponse.json({

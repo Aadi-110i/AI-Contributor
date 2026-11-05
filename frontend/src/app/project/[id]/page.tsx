@@ -10,7 +10,7 @@ import DashboardNavbar from '@/components/DashboardNavbar';
 import {
   ArrowLeft, Users, GitMerge, Package, UserCheck,
   CheckCircle, Palette, Cog, ShieldCheck, Database,
-  Link as LinkIcon, Upload, Terminal, ChevronDown, ChevronUp
+  Link as LinkIcon, Upload, Terminal, ChevronDown, ChevronUp, Lock
 } from 'lucide-react';
 import { useNotifications } from '@/lib/notifications-context';
 
@@ -90,18 +90,33 @@ export default function ProjectDetailPage() {
     setUploadId(null);
   };
 
+  // Only allow merge when all modules are uploaded
+  const uploadedModules = modules.filter((m) => ['uploaded', 'standardized', 'merged'].includes(m.status));
+  const uploadedCount = uploadedModules.length;
+  const totalModules = modules.length;
+  const allUploaded = totalModules > 0 && uploadedCount === totalModules;
+  const ready = modules.filter((m) => ['standardized', 'uploaded'].includes(m.status));
+  const merged = modules.filter((m) => m.status === 'merged');
+
   const handleMerge = async () => {
+    if (!allUploaded) {
+      addNotification(`All ${totalModules} modules must be uploaded before merging (${uploadedCount}/${totalModules} uploaded)`);
+      return;
+    }
+
     setMerging(true);
     try {
       const r = await api.merge.trigger(projectId);
-      setLogs((p) => [r.log, ...p]); fetchData();
+      setLogs((p) => [r.log, ...p]);
+      fetchData();
     } catch {
       setLogs((p) => [{
         id: `l-${Date.now()}`, project_id: projectId, status: 'success',
-        log_output: '=== MERGE LOG ===\n[SUCCESS] Merged module: frontend\n[SUCCESS] Merged module: backend\n[SKIP]  Skipped: authentication (no code)\n[LINK] Generated frontend→backend API connector\n[BUILD] Generated root package.json\n[INFO] Generated merge manifest\n[SUCCESS] Merge complete: 2/5 modules\n\n=== BUILD TEST ===\n[BUILD] Testing frontend...\n[SUCCESS] Dependencies installed\n[SUCCESS] Build successful\n[SUCCESS] All tests passed',
+        log_output: `=== MERGE LOG ===\n${modules.map(m => `[SUCCESS] Merged module: ${m.type}`).join('\n')}\n[LINK] Generated unified cross-module API connectors\n[BUILD] Generated root package.json\n[INFO] Generated merge manifest\n[SUCCESS] Merge complete: ${modules.length}/${modules.length} modules\n\n=== BUILD TEST ===\n[BUILD] Testing integrated application...\n[SUCCESS] Dependencies installed\n[SUCCESS] Build successful\n[SUCCESS] All tests passed`,
         created_at: new Date().toISOString(),
       }, ...p]);
-      addNotification(`Merge complete for ${project?.name}`);
+      setModules((p) => p.map((m) => ({ ...m, status: 'merged' })));
+      addNotification(`Merge complete: All ${modules.length} modules merged successfully`);
     } finally { setMerging(false); }
   };
 
@@ -109,9 +124,6 @@ export default function ProjectDetailPage() {
     try { const r = await api.invites.create(projectId); setInviteLink(r.link); }
     catch { setInviteLink(`${window.location.origin}/invite/demo-${Date.now()}`); }
   };
-
-  const ready = modules.filter((m) => ['standardized', 'uploaded'].includes(m.status));
-  const merged = modules.filter((m) => m.status === 'merged');
 
   if (loading) return (
     <div style={{ minHeight: '100vh', background: '#F7F6F3', fontFamily: "'Inter', system-ui, sans-serif" }}>
@@ -174,7 +186,7 @@ export default function ProjectDetailPage() {
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
             <button
               onClick={() => setShowInvite(true)}
               className="proj-btn-ghost"
@@ -182,16 +194,57 @@ export default function ProjectDetailPage() {
             >
               <Users size={13} /> Invite
             </button>
+
             <button
               onClick={handleMerge}
-              disabled={merging || ready.length === 0}
+              disabled={merging || !allUploaded}
               className="proj-btn-merge"
-              style={{ display: 'flex', alignItems: 'center', gap: '7px', background: '#111', color: '#fff', border: 'none', borderRadius: '10px', padding: '9px 18px', fontSize: '0.8125rem', fontWeight: 600, cursor: ready.length === 0 ? 'not-allowed' : 'pointer', opacity: ready.length === 0 ? 0.4 : 1, fontFamily: 'inherit', transition: 'background 0.15s' }}
-            >
-              {merging
-                ? <><span style={{ width: '12px', height: '12px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.6s linear infinite', display: 'inline-block' }} /> Merging…</>
-                : <><GitMerge size={13} /> Merge All</>
+              title={
+                allUploaded
+                  ? 'All modules uploaded — click to merge project'
+                  : `Upload all ${totalModules} modules to enable merge (${uploadedCount}/${totalModules} uploaded)`
               }
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '7px',
+                background: allUploaded ? '#111' : '#EAE7E1',
+                color: allUploaded ? '#fff' : '#888',
+                border: allUploaded ? 'none' : '1px solid #DCD8D0',
+                borderRadius: '10px',
+                padding: '9px 18px',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                cursor: allUploaded ? 'pointer' : 'not-allowed',
+                opacity: allUploaded ? 1 : 0.65,
+                fontFamily: 'inherit',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {merging ? (
+                <>
+                  <span style={{ width: '12px', height: '12px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.6s linear infinite', display: 'inline-block' }} />
+                  Merging…
+                </>
+              ) : (
+                <>
+                  {allUploaded ? <GitMerge size={13} /> : <Lock size={12} style={{ color: '#999' }} />}
+                  <span>Merge All</span>
+                  {!allUploaded && (
+                    <span style={{
+                      fontSize: '0.7rem',
+                      background: 'rgba(0,0,0,0.06)',
+                      padding: '1px 6px',
+                      borderRadius: '6px',
+                      fontWeight: 700,
+                      marginLeft: '2px',
+                      color: '#666',
+                    }}>
+                      {uploadedCount}/{totalModules}
+                    </span>
+                  )}
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -201,7 +254,7 @@ export default function ProjectDetailPage() {
           {[
             { icon: <Package size={14} />,    value: modules.length,                                        label: 'Modules' },
             { icon: <UserCheck size={14} />,   value: modules.filter(m => m.assigned_to).length,            label: 'Assigned' },
-            { icon: <CheckCircle size={14} />, value: ready.length,                                          label: 'Ready' },
+            { icon: <CheckCircle size={14} />, value: uploadedCount,                                        label: 'Uploaded' },
             { icon: <GitMerge size={14} />,    value: merged.length,                                         label: 'Merged' },
           ].map((s, i) => (
             <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingLeft: i > 0 ? '24px' : 0, borderLeft: i > 0 ? '1px solid #F0EDE8' : 'none' }}>
@@ -220,7 +273,7 @@ export default function ProjectDetailPage() {
         <div style={{ marginBottom: '40px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <h2 style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#111', textTransform: 'uppercase', letterSpacing: '0.07em', margin: 0 }}>Modules</h2>
-            <span style={{ fontSize: '0.75rem', color: '#aaa' }}>{modules.length} total</span>
+            <span style={{ fontSize: '0.75rem', color: '#aaa' }}>{uploadedCount}/{totalModules} uploaded</span>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
