@@ -41,6 +41,7 @@ export default function ProjectDetailPage() {
   const [modules, setModules] = useState<Module[]>([]);
   const [logs, setLogs] = useState<MergeLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [merging, setMerging] = useState(false);
   const [uploadId, setUploadId] = useState<string | null>(null);
   const [showInvite, setShowInvite] = useState(false);
@@ -51,30 +52,40 @@ export default function ProjectDetailPage() {
 
   useEffect(() => {
     const u = JSON.parse(localStorage.getItem('user') || '{}');
-    setUserId(u.id || 'local-dev-user');
+    setUserId(u.id || '');
     fetchData();
   }, [projectId]);
 
   const fetchData = useCallback(async () => {
+    setErrorMsg(null);
     try {
       const data = await api.projects.get(projectId);
-      setProject(data); setModules(data.modules || []);
-      const l = await api.merge.logs(projectId);
-      setLogs(l);
-    } catch {
-      setProject(DEMO_PROJECT); setModules(DEMO_PROJECT.modules || []);
-      setLogs(DEMO_LOGS);
-    } finally { setLoading(false); }
+      setProject(data);
+      setModules(data.modules || []);
+      try {
+        const l = await api.merge.logs(projectId);
+        setLogs(l || []);
+      } catch {
+        setLogs([]);
+      }
+    } catch (err: any) {
+      console.error('Failed to load project:', err);
+      setErrorMsg(err.message || 'Failed to load project');
+      setProject(null);
+      setModules([]);
+      setLogs([]);
+    } finally {
+      setLoading(false);
+    }
   }, [projectId]);
 
   const handleAssign = async (mid: string) => {
     try {
       await api.modules.assign(mid);
-      addNotification('You assigned yourself to a new module');
+      addNotification('You assigned yourself to this module');
       fetchData();
-    } catch {
-      setModules((p) => p.map((m) => m.id === mid ? { ...m, assigned_to: userId, status: 'in_progress' } : m));
-      addNotification('Module assigned to you (Demo)');
+    } catch (err: any) {
+      addNotification(`Failed to assign: ${err.message || 'Error'}`);
     }
   };
 
@@ -83,9 +94,8 @@ export default function ProjectDetailPage() {
       await api.modules.upload(mid, file);
       addNotification(`Successfully uploaded ${file.name}`);
       fetchData();
-    } catch {
-      setModules((p) => p.map((m) => m.id === mid ? { ...m, status: 'standardized' } : m));
-      addNotification(`Code uploaded for module ${mid.substring(0, 4)}`);
+    } catch (err: any) {
+      addNotification(`Upload failed: ${err.message || 'Error'}`);
     }
     setUploadId(null);
   };
@@ -95,7 +105,6 @@ export default function ProjectDetailPage() {
   const uploadedCount = uploadedModules.length;
   const totalModules = modules.length;
   const allUploaded = totalModules > 0 && uploadedCount === totalModules;
-  const ready = modules.filter((m) => ['standardized', 'uploaded'].includes(m.status));
   const merged = modules.filter((m) => m.status === 'merged');
 
   const handleMerge = async () => {
@@ -107,22 +116,25 @@ export default function ProjectDetailPage() {
     setMerging(true);
     try {
       const r = await api.merge.trigger(projectId);
-      setLogs((p) => [r.log, ...p]);
+      if (r.log) {
+        setLogs((p) => [r.log, ...p]);
+      }
       fetchData();
-    } catch {
-      setLogs((p) => [{
-        id: `l-${Date.now()}`, project_id: projectId, status: 'success',
-        log_output: `=== MERGE LOG ===\n${modules.map(m => `[SUCCESS] Merged module: ${m.type}`).join('\n')}\n[LINK] Generated unified cross-module API connectors\n[BUILD] Generated root package.json\n[INFO] Generated merge manifest\n[SUCCESS] Merge complete: ${modules.length}/${modules.length} modules\n\n=== BUILD TEST ===\n[BUILD] Testing integrated application...\n[SUCCESS] Dependencies installed\n[SUCCESS] Build successful\n[SUCCESS] All tests passed`,
-        created_at: new Date().toISOString(),
-      }, ...p]);
-      setModules((p) => p.map((m) => ({ ...m, status: 'merged' })));
-      addNotification(`Merge complete: All ${modules.length} modules merged successfully`);
-    } finally { setMerging(false); }
+      addNotification(`Merge complete for ${project?.name}: All modules merged successfully`);
+    } catch (err: any) {
+      addNotification(`Merge failed: ${err.message || 'Error'}`);
+    } finally {
+      setMerging(false);
+    }
   };
 
   const handleGenInvite = async () => {
-    try { const r = await api.invites.create(projectId); setInviteLink(r.link); }
-    catch { setInviteLink(`${window.location.origin}/invite/demo-${Date.now()}`); }
+    try {
+      const r = await api.invites.create(projectId);
+      setInviteLink(r.link);
+    } catch {
+      setInviteLink(`${window.location.origin}/invite/inv_${Date.now()}`);
+    }
   };
 
   if (loading) return (
@@ -142,8 +154,18 @@ export default function ProjectDetailPage() {
     <div style={{ minHeight: '100vh', background: '#F7F6F3', fontFamily: "'Inter', system-ui, sans-serif" }}>
       <DashboardNavbar />
       <div style={{ textAlign: 'center', padding: '120px 24px' }}>
-        <p style={{ color: '#111', fontWeight: 600 }}>Project not found</p>
-        <button onClick={() => router.push('/dashboard')} style={{ marginTop: '16px', background: '#111', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 20px', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.875rem' }}>Go Back</button>
+        <p style={{ color: '#111', fontWeight: 700, fontSize: '1.125rem' }}>
+          {errorMsg || 'Project not found'}
+        </p>
+        <p style={{ color: '#888', fontSize: '0.8125rem', marginTop: '6px' }}>
+          Please check the project ID or return to your dashboard.
+        </p>
+        <button
+          onClick={() => router.push('/dashboard/projects')}
+          style={{ marginTop: '18px', background: '#111', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 20px', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.875rem', fontWeight: 600 }}
+        >
+          Back to Projects
+        </button>
       </div>
     </div>
   );
@@ -280,7 +302,7 @@ export default function ProjectDetailPage() {
             {modules.map((mod) => {
               const meta = MODULE_META[mod.type] || MODULE_META.integrations;
               const st = STATUS_CFG[mod.status] || STATUS_CFG.unassigned;
-              const isMe = mod.assigned_to === userId;
+              const isMe = userId && mod.assigned_to === userId;
 
               if (uploadId === mod.id) return (
                 <div key={mod.id} style={{ background: '#fff', border: '1px solid #E8E4DD', borderRadius: '14px', padding: '20px' }}>
@@ -347,7 +369,7 @@ export default function ProjectDetailPage() {
                       <Upload size={12} /> Upload Code
                     </button>
                   )}
-                  {isMe && mod.status === 'standardized' && (
+                  {mod.status === 'standardized' && (
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', fontSize: '0.775rem', color: '#3DB87A', fontWeight: 600 }}>
                       <CheckCircle size={13} /> Ready to merge
                     </div>
@@ -416,22 +438,3 @@ export default function ProjectDetailPage() {
     </div>
   );
 }
-
-/* ─── Demo fallback data ─── */
-const DEMO_PROJECT: Project = {
-  id: 'demo-1', name: 'E-Commerce Platform', description: 'Full-stack e-commerce app with payments and admin',
-  owner_id: 'local-dev-user', status: 'active', created_at: '2026-04-10T12:00:00Z',
-  modules: [
-    { id: 'm1', project_id: 'demo-1', type: 'frontend',       assigned_to: 'local-dev-user', status: 'in_progress',  code_path: null, updated_at: '' },
-    { id: 'm2', project_id: 'demo-1', type: 'backend',        assigned_to: 'u2',              status: 'standardized', code_path: null, updated_at: '', profiles: { id: 'u2', username: 'Alex', avatar_url: '' } } as any,
-    { id: 'm3', project_id: 'demo-1', type: 'authentication', assigned_to: null,              status: 'unassigned',   code_path: null, updated_at: '' },
-    { id: 'm4', project_id: 'demo-1', type: 'database',       assigned_to: 'u3',              status: 'uploaded',     code_path: null, updated_at: '', profiles: { id: 'u3', username: 'Sam', avatar_url: '' } } as any,
-    { id: 'm5', project_id: 'demo-1', type: 'integrations',   assigned_to: null,              status: 'unassigned',   code_path: null, updated_at: '' },
-  ],
-};
-
-const DEMO_LOGS: MergeLog[] = [{
-  id: 'l1', project_id: 'demo-1', status: 'success',
-  log_output: '=== MERGE LOG ===\n[SUCCESS] Merged module: frontend\n[SUCCESS] Merged module: backend\n[SKIP]  Skipped: authentication (no code)\n[LINK] Generated frontend→backend API connector\n[BUILD] Generated root package.json\n[INFO] Generated merge manifest\n[SUCCESS] Merge complete: 2/5 modules\n\n=== BUILD TEST ===\n[BUILD] Testing frontend...\n[SUCCESS] Dependencies installed\n[SUCCESS] Build successful\n[SUCCESS] All tests passed',
-  created_at: '2026-04-11T10:00:00Z',
-}];
