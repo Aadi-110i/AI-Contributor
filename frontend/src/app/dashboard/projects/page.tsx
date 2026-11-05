@@ -7,7 +7,7 @@ import DashboardNavbar from '@/components/DashboardNavbar';
 import { api, type Project } from '@/lib/api';
 import { 
   FolderOpen, Plus, Search, ArrowUpRight, 
-  Clock, CheckCircle2, AlertCircle, Layers, Users, X, Check, Copy, Link as LinkIcon
+  Clock, CheckCircle2, AlertCircle, Layers, Users, X, Check, Copy, Link as LinkIcon, Trash2
 } from 'lucide-react';
 
 export default function ProjectsPage() {
@@ -24,6 +24,8 @@ export default function ProjectsPage() {
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [idCopied, setIdCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     loadProjects();
@@ -70,6 +72,20 @@ export default function ProjectsPage() {
     navigator.clipboard.writeText(text);
     if (type === 'id') { setIdCopied(true); setTimeout(() => setIdCopied(false), 2000); }
     else { setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000); }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await api.projects.delete(deleteTarget.id);
+      setProjects((prev) => prev.filter((p) => p.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete project');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const filteredProjects = projects.filter((p) => {
@@ -185,6 +201,13 @@ export default function ProjectsPage() {
                     <Link href={`/project/${project.id}`} className="open-link" title="Open Workspace">
                       <ArrowUpRight size={18} />
                     </Link>
+                    <button
+                      className="delete-card-btn"
+                      title="Delete project"
+                      onClick={(e) => { e.preventDefault(); setDeleteTarget(project); }}
+                    >
+                      <Trash2 size={15} />
+                    </button>
                   </div>
 
                   <div className="card-body">
@@ -318,6 +341,55 @@ export default function ProjectsPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="modal-backdrop" onClick={() => !deleting && setDeleteTarget(null)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '12px' }}>
+              <div style={{
+                width: '52px', height: '52px', borderRadius: '14px',
+                background: 'rgba(220,38,38,0.08)', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', color: '#dc2626',
+              }}>
+                <Trash2 size={22} />
+              </div>
+              <div>
+                <h3 className="modal-title" style={{ marginBottom: '6px' }}>Delete Project</h3>
+                <p className="modal-desc" style={{ marginBottom: 0 }}>
+                  Are you sure you want to delete <strong>&ldquo;{deleteTarget.name}&rdquo;</strong>?
+                  This will permanently remove all modules, invites, and merge logs.
+                  <br /><span style={{ color: '#dc2626', fontWeight: 600 }}>This action cannot be undone.</span>
+                </p>
+              </div>
+            </div>
+            <div className="modal-actions" style={{ marginTop: '24px' }}>
+              <button
+                className="btn-cancel"
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '7px',
+                  background: deleting ? '#fca5a5' : '#dc2626',
+                  color: '#fff', border: 'none', borderRadius: '8px',
+                  padding: '10px 20px', fontSize: '0.875rem', fontWeight: 600,
+                  cursor: deleting ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+                  transition: 'background 0.15s',
+                }}
+              >
+                <Trash2 size={14} />
+                {deleting ? 'Deleting…' : 'Delete Project'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -581,6 +653,25 @@ export default function ProjectsPage() {
           color: #111;
           background: #ECE9E2;
           transform: scale(1.05);
+        }
+
+        .delete-card-btn {
+          color: #bbb;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          background: #F8F7F4;
+          border: none;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .delete-card-btn:hover {
+          color: #dc2626;
+          background: rgba(220, 38, 38, 0.08);
         }
 
         .card-body {

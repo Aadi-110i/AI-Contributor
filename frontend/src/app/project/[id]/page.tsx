@@ -10,7 +10,7 @@ import DashboardNavbar from '@/components/DashboardNavbar';
 import {
   ArrowLeft, Users, GitMerge, Package, UserCheck,
   CheckCircle, Palette, Cog, ShieldCheck, Database,
-  Link as LinkIcon, Upload, Terminal, ChevronDown, ChevronUp, Lock
+  Link as LinkIcon, Upload, Terminal, ChevronDown, ChevronUp, Lock, Trash2
 } from 'lucide-react';
 import { useNotifications } from '@/lib/notifications-context';
 
@@ -48,6 +48,8 @@ export default function ProjectDetailPage() {
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [userId, setUserId] = useState('');
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const { addNotification } = useNotifications();
 
   useEffect(() => {
@@ -137,6 +139,18 @@ export default function ProjectDetailPage() {
     }
   };
 
+  const handleDeleteProject = async () => {
+    setDeleting(true);
+    try {
+      await api.projects.delete(projectId);
+      router.push('/dashboard/projects');
+    } catch (err: any) {
+      addNotification(`Failed to delete: ${err.message || 'Error'}`);
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   if (loading) return (
     <div style={{ minHeight: '100vh', background: '#F7F6F3', fontFamily: "'Inter', system-ui, sans-serif" }}>
       <DashboardNavbar />
@@ -215,6 +229,15 @@ export default function ProjectDetailPage() {
               style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#fff', color: '#444', border: '1px solid #E2DED8', borderRadius: '10px', padding: '9px 16px', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.15s' }}
             >
               <Users size={13} /> Invite
+            </button>
+
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="proj-btn-ghost"
+              title="Delete project"
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#fff', color: '#dc2626', border: '1px solid #fca5a5', borderRadius: '10px', padding: '9px 14px', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
+            >
+              <Trash2 size={13} />
             </button>
 
             <button
@@ -433,6 +456,59 @@ export default function ProjectDetailPage() {
             onGenerate={handleGenInvite}
             onClose={() => { setShowInvite(false); setInviteLink(null); }}
           />
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 400,
+            background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px',
+          }} onClick={() => !deleting && setShowDeleteConfirm(false)}>
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: '#fff', border: '1px solid #E7E5E1', borderRadius: '20px',
+                padding: '32px', maxWidth: '400px', width: '100%',
+                boxShadow: '0 24px 60px rgba(0,0,0,0.12)',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '14px',
+              }}
+            >
+              <div style={{
+                width: '54px', height: '54px', borderRadius: '14px',
+                background: 'rgba(220,38,38,0.08)', display: 'flex',
+                alignItems: 'center', justifyContent: 'center', color: '#dc2626', flexShrink: 0,
+              }}>
+                <Trash2 size={24} />
+              </div>
+              <div>
+                <p style={{ fontSize: '1.125rem', fontWeight: 700, color: '#111', margin: '0 0 6px' }}>
+                  Delete &ldquo;{project?.name}&rdquo;?
+                </p>
+                <p style={{ fontSize: '0.8125rem', color: '#666', margin: 0, lineHeight: 1.5 }}>
+                  This will permanently remove all modules, invites, and merge logs.{' '}
+                  <span style={{ color: '#dc2626', fontWeight: 600 }}>This cannot be undone.</span>
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '10px', width: '100%', marginTop: '6px' }}>
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={deleting}
+                  style={{ flex: 1, background: '#F5F3EF', color: '#444', border: '1px solid #E2DED8', borderRadius: '8px', padding: '10px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteProject}
+                  disabled={deleting}
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px', background: deleting ? '#fca5a5' : '#dc2626', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px', fontSize: '0.875rem', fontWeight: 600, cursor: deleting ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'background 0.15s' }}
+                >
+                  <Trash2 size={13} />
+                  {deleting ? 'Deleting…' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
