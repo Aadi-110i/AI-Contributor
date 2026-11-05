@@ -46,30 +46,30 @@ Modern AI coding tools — Claude, ChatGPT, Trae, Cursor, Copilot — are powerf
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                   WiiBuild Platform                  │
-│                                                       │
-│  ┌────────────┐    ┌────────────┐    ┌────────────┐  │
-│  │ Contributor│    │ Contributor│    │ Contributor│  │
-│  │  (Claude)  │    │ (ChatGPT)  │    │   (Trae)   │  │
-│  └─────┬──────┘    └─────┬──────┘    └─────┬──────┘  │
-│        │ Frontend        │ Backend          │ Auth    │
-│        └─────────────────┴──────────────────┘        │
-│                          │                            │
-│              ┌───────────▼───────────┐               │
-│              │   WiiBuild Dashboard   │               │
-│              │  Assign · Upload · Merge│               │
-│              └───────────┬───────────┘               │
-│                          │                            │
-│              ┌───────────▼───────────┐               │
-│              │  Merge Engine (API)    │               │
-│              │  Standardize · Test    │               │
-│              └───────────┬───────────┘               │
-│                          │                            │
-│              ┌───────────▼───────────┐               │
-│              │  Supabase (Postgres)   │               │
-│              │  Users · Projects ·    │               │
-│              │  Modules · Merge Logs  │               │
-│              └───────────────────────┘               │
+│                   WiiBuild Platform                 │
+│                                                     │
+│  ┌────────────┐    ┌────────────┐    ┌────────────┐ │
+│  │ Contributor│    │ Contributor│    │ Contributor│ │
+│  │  (Claude)  │    │ (ChatGPT)  │    │   (Trae)   │ │
+│  └─────┬──────┘    └─────┬──────┘    └─────┬──────┘ │
+│        │ Frontend        │ Backend          │ Auth  │
+│        └─────────────────┴──────────────────┘       │
+│                          │                          │
+│              ┌───────────▼───────────┐              │
+│              │   WiiBuild Dashboard   │             │
+│              │  Assign · Upload · Merge│            │
+│              └───────────┬───────────┘              │
+│                          │                          │
+│              ┌───────────▼───────────┐              │
+│              │  Merge Engine (API)    │             │
+│              │  Standardize · Test    │             │
+│              └───────────┬───────────┘              │
+│                          │                          │
+│              ┌───────────▼───────────┐              │
+│              │  Supabase (Postgres)   │             │
+│              │  Users · Projects ·    │             │
+│              │  Modules · Merge Logs  │             │
+│              └───────────────────────┘              │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -164,45 +164,6 @@ App runs at: **http://localhost:3000**
 6. Analytics        → real-time KPIs: completion %, contributors, merge rate
 ```
 
----
-
-## 📁 Repository Layout
-
-```
-ai-collab-builder/
-├── frontend/
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── page.tsx                  ← Landing page
-│   │   │   ├── login/                    ← Auth (sign in / sign up)
-│   │   │   ├── dashboard/                ← Main workspace
-│   │   │   │   ├── page.tsx              ← Overview + stats
-│   │   │   │   ├── projects/             ← Project list
-│   │   │   │   ├── modules/              ← Module tracker
-│   │   │   │   ├── deployments/          ← Merge & deploy logs
-│   │   │   │   ├── analytics/            ← Real-time KPIs
-│   │   │   │   ├── collaborations/       ← Team management
-│   │   │   │   └── ai-tools/             ← AI pipeline runners
-│   │   │   ├── project/[id]/             ← Per-project workspace
-│   │   │   ├── invite/[token]/           ← Invite claim page
-│   │   │   └── api/                      ← Serverless API routes
-│   │   │       ├── auth/signup, login, refresh
-│   │   │       ├── projects/, projects/[id]
-│   │   │       ├── modules/, modules/[id]/assign
-│   │   │       ├── deployments/
-│   │   │       └── merge/project/[id]/
-│   │   ├── components/
-│   │   │   ├── ui/                       ← Reusable UI primitives
-│   │   │   └── dashboard/                ← Dashboard-specific widgets
-│   │   └── lib/
-│   │       ├── auth-tokens.ts            ← JWT generation + verification
-│   │       ├── supabase-server.ts        ← Server-side Supabase client
-│   │       └── api.ts                    ← Typed API client
-│   └── package.json
-└── README.md
-```
-
----
 
 ## 🌐 Deployment (Vercel)
 
