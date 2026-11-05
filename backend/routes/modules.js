@@ -6,6 +6,7 @@ const fs = require('fs');
 const supabase = require('../lib/supabase');
 const { authenticate } = require('../middleware/auth');
 const { standardizeModule } = require('../services/standardizer');
+const { validateZipSecurity } = require('../services/zip-security');
 
 // Configure multer for ZIP uploads
 const storage = multer.diskStorage({
@@ -21,7 +22,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage,
-    limits: { fileSize: 500 * 1024 * 1024 }, // 500 MB max — module ZIPs can be large
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB safe threshold — protects against zip bombs and resource exhaustion
     fileFilter: (req, file, cb) => {
         if (file.mimetype === 'application/zip' || file.originalname.endsWith('.zip')) {
             cb(null, true);
@@ -130,6 +131,14 @@ router.post('/:id/unassign', authenticate, async (req, res, next) => {
 router.post('/:id/upload', authenticate, upload.single('code'), async (req, res, next) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+        // Security inspection: check for zip bombs, path traversal, malicious extensions
+        const fileBuf = fs.readFileSync(req.file.path);
+        const check = validateZipSecurity(fileBuf);
+        if (!check.safe) {
+            fs.unlinkSync(req.file.path);
+            return res.status(400).json({ error: check.error });
+        }
 
         const { data: module } = await supabase
             .from('modules')

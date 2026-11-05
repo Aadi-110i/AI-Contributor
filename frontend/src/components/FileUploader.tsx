@@ -9,7 +9,7 @@ interface Props {
     maxSizeMB?: number;
 }
 
-export default function FileUploader({ onUpload, accept = '.zip', maxSizeMB = 500 }: Props) {
+export default function FileUploader({ onUpload, accept = '.zip', maxSizeMB = 50 }: Props) {
     const fileRef = useRef<HTMLInputElement>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -55,7 +55,7 @@ export default function FileUploader({ onUpload, accept = '.zip', maxSizeMB = 50
                     <p style={{ color: 'var(--text-white)', fontWeight: 600, fontSize: '0.875rem', marginBottom: '4px' }}>
                         Drop your ZIP here
                     </p>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>or click to browse • Max {maxSizeMB}MB</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>or click to browse • Max {maxSizeMB}MB • Scanned for Zip Bombs & integrity</p>
                 </>
             )}
         </div>

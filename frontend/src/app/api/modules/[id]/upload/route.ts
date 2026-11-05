@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase-server';
 import { verifyAccessToken } from '@/lib/auth-tokens';
+import { validateZipSecurity } from '@/lib/zip-security';
 
 // Next.js App Router route segment config
 export const maxDuration = 60; // seconds
@@ -49,17 +50,27 @@ export async function POST(
         }
 
         if (!file.name.endsWith('.zip') && file.type !== 'application/zip') {
-            return NextResponse.json({ error: 'Only ZIP files are allowed' }, { status: 400 });
+            return NextResponse.json({ error: 'Only standard ZIP (.zip) code archives are allowed' }, { status: 400 });
         }
 
-        // 500 MB limit (500 * 1024 * 1024 bytes)
-        const MAX_SIZE = 500 * 1024 * 1024;
-        if (file.size > MAX_SIZE) {
-            return NextResponse.json({ error: `File too large. Maximum allowed size is 500 MB.` }, { status: 413 });
+        // Convert file to Buffer for deep security inspection
+        const fileBuffer = Buffer.from(await file.arrayBuffer());
+
+        // Perform security audit (Zip Bomb detection, Zip Slip, dangerous executables, magic bytes)
+        const securityCheck = validateZipSecurity(fileBuffer, {
+            maxFileSize: 50 * 1024 * 1024, // 50 MB safe threshold for module code
+            maxUncompressedSize: 250 * 1024 * 1024,
+            maxCompressionRatio: 25,
+            maxFileCount: 5000,
+        });
+
+        if (!securityCheck.safe) {
+            return NextResponse.json({
+                error: securityCheck.error || 'Security check failed: potentially malicious archive.'
+            }, { status: 400 });
         }
 
-        // Store the file in Supabase Storage under modules/<module_id>/<filename>
-        const fileBuffer = await file.arrayBuffer();
+        // Store the validated file in Supabase Storage under modules/<module_id>/<filename>
         const storagePath = `modules/${id}/${file.name}`;
 
         let savedPath = file.name;
