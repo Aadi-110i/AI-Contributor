@@ -9,7 +9,7 @@ interface Props {
     maxSizeMB?: number;
 }
 
-export default function FileUploader({ onUpload, accept = '.zip', maxSizeMB = 50 }: Props) {
+export default function FileUploader({ onUpload, accept = '.zip', maxSizeMB = 500 }: Props) {
     const fileRef = useRef<HTMLInputElement>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [uploading, setUploading] = useState(false);

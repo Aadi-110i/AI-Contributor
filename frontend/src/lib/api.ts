@@ -117,6 +117,8 @@ export const api = {
         unassign: (id: string) =>
             apiRequest<Module>(`/modules/${id}/unassign`, { method: 'POST' }),
         upload: (id: string, file: File) => apiUpload(`/modules/${id}/upload`, file),
+        deleteUpload: (id: string) =>
+            apiRequest<{ message: string; module: Module }>(`/modules/${id}/upload`, { method: 'DELETE' }),
         status: (id: string) => apiRequest<Module>(`/modules/${id}/status`),
     },
     invites: {

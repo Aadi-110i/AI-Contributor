@@ -10,7 +10,8 @@ import DashboardNavbar from '@/components/DashboardNavbar';
 import {
   ArrowLeft, Users, GitMerge, Package, UserCheck,
   CheckCircle, Palette, Cog, ShieldCheck, Database,
-  Link as LinkIcon, Upload, Terminal, ChevronDown, ChevronUp, Lock, Trash2
+  Link as LinkIcon, Upload, Terminal, ChevronDown, ChevronUp, Lock, Trash2,
+  FileArchive, RefreshCw, Undo2
 } from 'lucide-react';
 import { useNotifications } from '@/lib/notifications-context';
 
@@ -50,6 +51,8 @@ export default function ProjectDetailPage() {
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteUploadTarget, setDeleteUploadTarget] = useState<{ id: string; type: string } | null>(null);
+  const [deletingUpload, setDeletingUpload] = useState(false);
   const { addNotification } = useNotifications();
 
   useEffect(() => {
@@ -100,6 +103,31 @@ export default function ProjectDetailPage() {
       addNotification(`Upload failed: ${err.message || 'Error'}`);
     }
     setUploadId(null);
+  };
+
+  const handleDeleteUploadConfirm = async () => {
+    if (!deleteUploadTarget) return;
+    setDeletingUpload(true);
+    try {
+      await api.modules.deleteUpload(deleteUploadTarget.id);
+      addNotification(`Deleted uploaded code for ${deleteUploadTarget.type}`);
+      setDeleteUploadTarget(null);
+      fetchData();
+    } catch (err: any) {
+      addNotification(`Failed to delete code: ${err.message || 'Error'}`);
+    } finally {
+      setDeletingUpload(false);
+    }
+  };
+
+  const handleUnassign = async (mid: string, typeName: string) => {
+    try {
+      await api.modules.unassign(mid);
+      addNotification(`Unassigned from ${typeName} module`);
+      fetchData();
+    } catch (err: any) {
+      addNotification(`Failed to unassign: ${err.message || 'Error'}`);
+    }
   };
 
   // Only allow merge when all modules are uploaded
@@ -375,6 +403,63 @@ export default function ProjectDetailPage() {
                     )}
                   </div>
 
+                  {/* Uploaded File Package */}
+                  {['uploaded', 'standardized', 'merged'].includes(mod.status) && (
+                    <div style={{
+                      background: '#F6F9F6',
+                      border: '1px solid #D8EAD8',
+                      borderRadius: '10px',
+                      padding: '10px 12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '8px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                        <FileArchive size={16} style={{ color: '#2E7D32', flexShrink: 0 }} />
+                        <div style={{ minWidth: 0 }}>
+                          <p style={{
+                            fontSize: '0.78rem',
+                            fontWeight: 600,
+                            color: '#1B5E20',
+                            margin: 0,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }} title={mod.code_path ? mod.code_path.split('/').pop() : `${mod.type}.zip`}>
+                            {mod.code_path ? mod.code_path.split('/').pop() : `${mod.type}.zip`}
+                          </p>
+                          <span style={{ fontSize: '0.675rem', color: '#558B2F', fontWeight: 500 }}>
+                            {mod.status === 'merged' ? '✓ Merged into build' : '✓ Package uploaded'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Delete upload button if not merged yet and user is assignee or project owner */}
+                      {mod.status !== 'merged' && (isMe || project?.owner_id === userId) && (
+                        <button
+                          onClick={() => setDeleteUploadTarget({ id: mod.id, type: mod.type })}
+                          title="Delete uploaded code package"
+                          style={{
+                            background: 'rgba(224,90,90,0.08)',
+                            border: '1px solid rgba(224,90,90,0.2)',
+                            color: '#D32F2F',
+                            cursor: 'pointer',
+                            padding: '6px',
+                            borderRadius: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </div>
+                  )}
+
                   {/* Actions */}
                   {mod.status === 'unassigned' && (
                     <button
@@ -385,16 +470,40 @@ export default function ProjectDetailPage() {
                     </button>
                   )}
                   {isMe && ['in_progress', 'error'].includes(mod.status) && (
-                    <button
-                      onClick={() => setUploadId(mod.id)}
-                      style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#111', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-                    >
-                      <Upload size={12} /> Upload Code
-                    </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <button
+                        onClick={() => setUploadId(mod.id)}
+                        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#111', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                      >
+                        <Upload size={12} /> Upload Code (.zip)
+                      </button>
+                      <button
+                        onClick={() => handleUnassign(mod.id, mod.type)}
+                        style={{ width: '100%', background: 'transparent', color: '#888', border: 'none', padding: '4px', fontSize: '0.72rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                      >
+                        <Undo2 size={11} /> Release module
+                      </button>
+                    </div>
                   )}
-                  {mod.status === 'standardized' && (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', fontSize: '0.775rem', color: '#3DB87A', fontWeight: 600 }}>
-                      <CheckCircle size={13} /> Ready to merge
+                  {isMe && ['uploaded', 'standardized'].includes(mod.status) && (
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button
+                        onClick={() => setUploadId(mod.id)}
+                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', background: '#fff', color: '#444', border: '1px solid #DCD8D0', borderRadius: '8px', padding: '7px 10px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                      >
+                        <RefreshCw size={11} /> Replace ZIP
+                      </button>
+                      <button
+                        onClick={() => setDeleteUploadTarget({ id: mod.id, type: mod.type })}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', background: '#fff', color: '#dc2626', border: '1px solid #fca5a5', borderRadius: '8px', padding: '7px 10px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                      >
+                        <Trash2 size={11} /> Delete
+                      </button>
+                    </div>
+                  )}
+                  {mod.status === 'merged' && (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', fontSize: '0.775rem', color: '#C9A45F', fontWeight: 600 }}>
+                      <GitMerge size={13} /> Integrated into build
                     </div>
                   )}
                 </div>
@@ -456,6 +565,58 @@ export default function ProjectDetailPage() {
             onGenerate={handleGenInvite}
             onClose={() => { setShowInvite(false); setInviteLink(null); }}
           />
+        )}
+
+        {/* Delete Upload Confirmation Modal */}
+        {deleteUploadTarget && (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 400,
+            background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px',
+          }} onClick={() => !deletingUpload && setDeleteUploadTarget(null)}>
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: '#fff', border: '1px solid #E7E5E1', borderRadius: '20px',
+                padding: '30px', maxWidth: '380px', width: '100%',
+                boxShadow: '0 24px 60px rgba(0,0,0,0.12)',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '14px',
+              }}
+            >
+              <div style={{
+                width: '50px', height: '50px', borderRadius: '14px',
+                background: 'rgba(220,38,38,0.08)', display: 'flex',
+                alignItems: 'center', justifyContent: 'center', color: '#dc2626', flexShrink: 0,
+              }}>
+                <Trash2 size={22} />
+              </div>
+              <div>
+                <p style={{ fontSize: '1.05rem', fontWeight: 700, color: '#111', margin: '0 0 6px', textTransform: 'capitalize' }}>
+                  Delete {deleteUploadTarget.type} Code?
+                </p>
+                <p style={{ fontSize: '0.8125rem', color: '#666', margin: 0, lineHeight: 1.5 }}>
+                  This will remove the uploaded ZIP package and reset the module to in-progress so you can re-upload or release it.
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '10px', width: '100%', marginTop: '6px' }}>
+                <button
+                  onClick={() => setDeleteUploadTarget(null)}
+                  disabled={deletingUpload}
+                  style={{ flex: 1, background: '#F5F3EF', color: '#444', border: '1px solid #E2DED8', borderRadius: '8px', padding: '10px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteUploadConfirm}
+                  disabled={deletingUpload}
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px', background: deletingUpload ? '#fca5a5' : '#dc2626', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px', fontSize: '0.875rem', fontWeight: 600, cursor: deletingUpload ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'background 0.15s' }}
+                >
+                  <Trash2 size={13} />
+                  {deletingUpload ? 'Deleting…' : 'Delete Code'}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Delete Confirmation Modal */}

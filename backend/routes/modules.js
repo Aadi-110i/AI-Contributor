@@ -21,7 +21,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage,
-    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max
+    limits: { fileSize: 500 * 1024 * 1024 }, // 500 MB max — module ZIPs can be large
     fileFilter: (req, file, cb) => {
         if (file.mimetype === 'application/zip' || file.originalname.endsWith('.zip')) {
             cb(null, true);
@@ -163,6 +163,38 @@ router.post('/:id/upload', authenticate, upload.single('code'), async (req, res,
             module: data,
             standardization: result,
         });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// Delete/remove uploaded code for a module
+router.delete('/:id/upload', authenticate, async (req, res, next) => {
+    try {
+        const { data: module } = await supabase
+            .from('modules')
+            .select('*')
+            .eq('id', req.params.id)
+            .single();
+
+        if (!module) return res.status(404).json({ error: 'Module not found' });
+        if (module.assigned_to !== req.user.id) {
+            return res.status(403).json({ error: 'Only the assigned contributor can delete uploaded code' });
+        }
+
+        const { data, error } = await supabase
+            .from('modules')
+            .update({
+                status: 'in_progress',
+                code_path: null,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('id', req.params.id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.json({ message: 'Uploaded code removed', module: data });
     } catch (err) {
         next(err);
     }

@@ -23,5 +23,8 @@ export function getSupabaseServer() {
 }
 
 export const supabaseServer = {
-    from: (table: string) => getSupabaseServer().from(table)
+    from: (table: string) => getSupabaseServer().from(table),
+    get storage() {
+        return getSupabaseServer().storage;
+    }
 };
