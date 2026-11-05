@@ -1,107 +1,244 @@
-# AI Collab Builder
+<div align="center">
 
-AI Collab Builder is a collaborative workspace for teams building software with AI. Each contributor owns a module such as frontend, backend, auth, database, or integrations. The platform standardizes uploaded code, merges the modules into one app, and runs build checks so the result is easier to review and demo.
+# 🏗️ WiiBuild
 
-## Why it stands out
+### **Collaborative AI Development Platform**
 
-- Built for team-based AI development, not solo prompting.
-- Demo mode works without Supabase, so visitors can explore immediately.
-- The merge pipeline creates a real handoff from module upload to combined output.
-- The UI is polished enough for demos, interviews, and portfolio reviews.
+> *Build projects together — each person uses their own AI tool, we handle the merge.*
 
-## What it includes
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-ai--contributor.vercel.app-black?style=for-the-badge&logo=vercel)](https://ai-contributor.vercel.app)
+[![Next.js](https://img.shields.io/badge/Next.js%2016-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 
-- Landing page with a product-style presentation.
-- Auth flow with Supabase or local demo login.
-- Dashboard for creating projects and inviting collaborators.
-- Module assignment, ZIP upload, standardization, and merge flow.
-- Auto-test runner for merged output.
+</div>
 
-## Quick Start
+---
 
-### 1. Install dependencies
+## 🧩 The Problem We Solved
 
-```bash
-cd backend && npm install
-cd ../frontend && npm install
+Modern AI coding tools — Claude, ChatGPT, Trae, Cursor, Copilot — are powerful **individually**. But when a **team** tries to build one application with different AI tools, everything breaks:
+
+- One person uses ChatGPT for the backend, another uses Claude for the frontend
+- Code styles conflict, imports clash, naming conventions differ
+- There is no shared workspace, no handoff process, no way to merge it all
+
+**WiiBuild fixes this.** It gives teams a shared platform where everyone works in their own AI tool, owns a specific module, and the platform standardizes and merges everything into one working application — automatically.
+
+---
+
+## ✨ What We Offer
+
+| Feature | Description |
+|---|---|
+| 🧠 **Modular Architecture** | Every project is split into 5 independent modules: Frontend, Backend, Auth, Database, and Integrations |
+| 🤝 **AI-Agnostic Collaboration** | Use Claude, ChatGPT, Trae, Cursor, or any AI — no lock-in |
+| 🔀 **Automated Merge Engine** | Modules are merged with API wiring, auth bridges, and structure enforcement |
+| 📦 **Module Upload & Standardization** | Each contributor uploads a ZIP, we standardize naming, imports, and types |
+| 🔗 **Invite System** | Share a unique link to onboard collaborators to specific modules instantly |
+| 📊 **Real-Time Analytics** | Track project completion, module status, and team contribution rates |
+| 🚀 **Deployment-Ready** | Vercel-deployed frontend with Supabase-backed persistence and JWT auth |
+| 🔐 **Secure Auth** | Email/password signup with bcrypt hashing, JWT access tokens, and refresh tokens |
+
+---
+
+## 🏛️ Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│                   WiiBuild Platform                  │
+│                                                       │
+│  ┌────────────┐    ┌────────────┐    ┌────────────┐  │
+│  │ Contributor│    │ Contributor│    │ Contributor│  │
+│  │  (Claude)  │    │ (ChatGPT)  │    │   (Trae)   │  │
+│  └─────┬──────┘    └─────┬──────┘    └─────┬──────┘  │
+│        │ Frontend        │ Backend          │ Auth    │
+│        └─────────────────┴──────────────────┘        │
+│                          │                            │
+│              ┌───────────▼───────────┐               │
+│              │   WiiBuild Dashboard   │               │
+│              │  Assign · Upload · Merge│               │
+│              └───────────┬───────────┘               │
+│                          │                            │
+│              ┌───────────▼───────────┐               │
+│              │  Merge Engine (API)    │               │
+│              │  Standardize · Test    │               │
+│              └───────────┬───────────┘               │
+│                          │                            │
+│              ┌───────────▼───────────┐               │
+│              │  Supabase (Postgres)   │               │
+│              │  Users · Projects ·    │               │
+│              │  Modules · Merge Logs  │               │
+│              └───────────────────────┘               │
+└─────────────────────────────────────────────────────┘
 ```
 
-### 2. Configure environment variables
+---
 
-Copy [`.env.example`](.env.example) and fill in Supabase only if you want real auth and persistence. If you skip Supabase, the app uses local mock data and demo login.
+## 🛠️ Tech Stack
 
-### 3. Start the app
+### Frontend
+| Technology | Purpose |
+|---|---|
+| **Next.js 16** (App Router) | Framework, routing, SSR/SSG |
+| **React 19** | UI rendering |
+| **TypeScript** | Type safety throughout |
+| **Tailwind CSS v4** | Utility-first styling |
+| **Framer Motion** | Animations and transitions |
+| **Lucide React** | Icon system |
+| **Cobe** | Interactive 3D globe on landing page |
 
-From the repo root:
+### Backend (Serverless API — Next.js Route Handlers)
+| Technology | Purpose |
+|---|---|
+| **Next.js API Routes** | Serverless API endpoints — no Express needed |
+| **Supabase JS SDK** | Database queries via Postgres |
+| **bcryptjs** | Secure password hashing |
+| **jsonwebtoken (JWT)** | Access tokens (1h) + Refresh tokens (7d) |
+
+### Database & Infrastructure
+| Technology | Purpose |
+|---|---|
+| **Supabase (Postgres)** | Cloud database — users, projects, modules, merge logs |
+| **Vercel** | Frontend + API deployment (serverless functions) |
+
+---
+
+## 🗂️ Database Schema
+
+```
+profiles        → user accounts (id, email, username, avatar)
+projects        → workspace (id, name, owner, description, status)
+modules         → module assignments (id, project_id, type, assignee, status)
+invites         → invite links (id, project_id, token, module_type)
+merge_logs      → deployment history (id, project_id, timestamp, status)
+```
+
+---
+
+## 🚀 Quick Start (Local)
+
+### 1. Clone the repo
+
+```bash
+git clone https://github.com/Aadi-110i/AI-Contributor.git
+cd AI-Contributor/ai-collab-builder
+```
+
+### 2. Install dependencies
+
+```bash
+cd frontend && npm install
+```
+
+### 3. Set environment variables
+
+Create `frontend/.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+JWT_SECRET=any_long_random_string
+```
+
+> ⚠️ Use the **Framework tab** in Supabase's Connect modal to get the `anon` key (starts with `eyJ...`). The `sb_publishable_...` key from the Server tab will NOT work.
+
+### 4. Run the app
 
 ```bash
 npm run dev
 ```
 
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:5001
-- Health check: http://localhost:5001/api/health
+App runs at: **http://localhost:3000**
 
-## Demo Mode
+---
 
-You do not need a database to open the app locally. If Supabase env vars are missing, the backend falls back to `mock-db.json` and the login screen supports demo/local auth.
+## 📋 Key User Flows
 
-## Architecture
-
-```text
-Frontend (Next.js)
-    Landing | Auth | Dashboard | Project | Invite
-                |
-                v
-Backend (Express)
-    Projects | Modules | Invites | Merge | Test Runner
-                |
-                v
-Supabase or local mock store
+```
+1. Sign Up          → email + password → JWT tokens issued
+2. Create Project   → 5 modules auto-scaffolded in DB
+3. Invite Team      → unique token link → collaborator claims a module
+4. Build Modules    → each person uses their own AI tool
+5. Upload & Merge   → standardize → merge → test → deployment log
+6. Analytics        → real-time KPIs: completion %, contributors, merge rate
 ```
 
-## Repository Layout
+---
 
-```text
+## 📁 Repository Layout
+
+```
 ai-collab-builder/
-├── backend/       Express API, merge pipeline, auth middleware
-├── frontend/      Next.js app and UI components
-├── scripts/       Database setup, seed data, root dev launcher
-├── shared/        Shared types and constants
-├── mock-db.json   Local fallback data store
+├── frontend/
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── page.tsx                  ← Landing page
+│   │   │   ├── login/                    ← Auth (sign in / sign up)
+│   │   │   ├── dashboard/                ← Main workspace
+│   │   │   │   ├── page.tsx              ← Overview + stats
+│   │   │   │   ├── projects/             ← Project list
+│   │   │   │   ├── modules/              ← Module tracker
+│   │   │   │   ├── deployments/          ← Merge & deploy logs
+│   │   │   │   ├── analytics/            ← Real-time KPIs
+│   │   │   │   ├── collaborations/       ← Team management
+│   │   │   │   └── ai-tools/             ← AI pipeline runners
+│   │   │   ├── project/[id]/             ← Per-project workspace
+│   │   │   ├── invite/[token]/           ← Invite claim page
+│   │   │   └── api/                      ← Serverless API routes
+│   │   │       ├── auth/signup, login, refresh
+│   │   │       ├── projects/, projects/[id]
+│   │   │       ├── modules/, modules/[id]/assign
+│   │   │       ├── deployments/
+│   │   │       └── merge/project/[id]/
+│   │   ├── components/
+│   │   │   ├── ui/                       ← Reusable UI primitives
+│   │   │   └── dashboard/                ← Dashboard-specific widgets
+│   │   └── lib/
+│   │       ├── auth-tokens.ts            ← JWT generation + verification
+│   │       ├── supabase-server.ts        ← Server-side Supabase client
+│   │       └── api.ts                    ← Typed API client
+│   └── package.json
 └── README.md
 ```
 
-## Key Flows
+---
 
-1. Sign in with Supabase or use demo login.
-2. Create a project and auto-generate five modules.
-3. Invite collaborators with a shareable link.
-4. Assign modules and upload ZIP files.
-5. Standardize, merge, and test the combined project.
+## 🌐 Deployment (Vercel)
 
-## Environment
+| Setting | Value |
+|---|---|
+| **Root Directory** | `frontend/` |
+| **Framework** | Next.js |
+| **Build Command** | `npm run build` |
+| **Output** | `.next/` |
 
-- `PORT=5001` for the backend.
-- `NEXT_PUBLIC_API_URL=http://localhost:5001/api` for the frontend.
-- `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_JWT_SECRET` are optional for local demo mode.
+Required Vercel environment variables:
+```
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+JWT_SECRET
+```
 
-## Deploying On Vercel
+---
 
-This repository is a monorepo. For Vercel, set the project root to `frontend/`, not the repository root.
+## 🎯 Why This Project?
 
-- Frontend deployment target: `frontend/`
-- Backend deployment target: a separate host such as Render, Railway, Fly, or another Node server
-- Production frontend API URL: set `NEXT_PUBLIC_API_URL` to the deployed backend URL
-- If you deploy only the frontend, the app can load, but API requests will fail until the backend is live
+This was built to solve a **real problem in AI-era team development**: there is no standard platform for teams to collaborate when every person is using a different AI coding tool. WiiBuild is the missing middleware — a shared workspace, merge engine, and collaboration layer for AI-assisted software teams.
 
-If Vercel is showing `404: NOT_FOUND`, it usually means the project is pointed at the wrong folder or the domain is attached to a deployment that does not contain the Next app.
+It demonstrates:
+- **Full-stack Next.js** with serverless API routes (no separate backend needed)
+- **Secure auth** with JWT, bcrypt, refresh tokens
+- **Real database integration** with Supabase Postgres
+- **Production deployment** on Vercel with zero build errors
+- **Clean, recruiter-ready UI** with thoughtful design and empty states
 
-## Tech Stack
+---
 
-- Next.js 16
-- React 19
-- Node.js + Express
-- Supabase
-- Multer
-- adm-zip
+<div align="center">
+
+**Built with ❤️ by [Aadi-110i](https://github.com/Aadi-110i)**
+
+[Live Demo →](https://ai-contributor.vercel.app) · [Report Bug](https://github.com/Aadi-110i/AI-Contributor/issues) · [Request Feature](https://github.com/Aadi-110i/AI-Contributor/issues)
+
+</div>
